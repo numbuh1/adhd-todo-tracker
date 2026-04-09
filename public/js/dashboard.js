@@ -53,7 +53,7 @@ setInterval(updateClock, 1000);
         if (item.id) layout[item.id] = { x: item.x, y: item.y, w: item.w, h: item.h };
       });
       try {
-        await fetch('/admin/settings/grid-layout', {
+        await fetch('admin/settings/grid-layout', {
           method:  'POST',
           headers: { 'Content-Type': 'application/json' },
           body:    JSON.stringify({ layout })
@@ -89,11 +89,11 @@ document.addEventListener('change', async (e) => {
     let url, body;
 
     if (type === 'goal') {
-      url  = '/admin/weekly-todos/api/toggle-goal';
+      url  = 'admin/weekly-todos/api/toggle-goal';
       body = { weekId: label.dataset.weekId, goalId: label.dataset.goalId, completed };
 
     } else if (type === 'todo') {
-      url  = '/admin/weekly-todos/api/toggle-todo';
+      url  = 'admin/weekly-todos/api/toggle-todo';
       body = {
         weekId:   label.dataset.weekId,
         dayIndex: label.dataset.dayIndex,
@@ -102,7 +102,7 @@ document.addEventListener('change', async (e) => {
       };
 
     } else if (type === 'habit') {
-      url  = '/admin/habit-tracker/api/toggle';
+      url  = 'admin/habit-tracker/api/toggle';
       body = { habitId: label.dataset.habitId, date: label.dataset.date, completed };
 
     } else { return; }
