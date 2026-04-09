@@ -7,7 +7,7 @@
 
     <div class="week-grid">
       <% weeks.forEach(w => { %>
-      <a href="/admin/weekly-todos/<%= w.weekStart %>/edit"
+      <a href="admin/weekly-todos/<%= w.weekStart %>/edit"
          class="week-card<%= w.isCurrent ? ' week-card-current' : '' %>">
         <div class="week-card-label">
           <% if (w.isCurrent) { %><span class="current-badge">Current Week</span><% } %>
