@@ -1,6 +1,8 @@
 const mongoose = require('mongoose');
 
 const settingsSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, unique: true },
+
   theme: {
     accentColor:       { type: String, default: '#7c3aed' },
     backgroundColor:   { type: String, default: '#0a0a16' },
@@ -11,14 +13,13 @@ const settingsSchema = new mongoose.Schema({
   },
 
   // gridLayout stores Gridstack positions { x, y, w, h } per module key.
-  // Stored as Mixed so any module can be added without schema changes.
   gridLayout: {
     type: mongoose.Schema.Types.Mixed,
     default: () => ({
-      calendar:     { x: 0,  y: 0, w: 4, h: 6 },
-      weeklyTodos:  { x: 4,  y: 0, w: 5, h: 6 },
-      habitTracker: { x: 9,  y: 0, w: 3, h: 4 },
-      musicPlayer:  { x: 9,  y: 4, w: 3, h: 5 }
+      calendar:     { x: 0, y: 0, w: 4, h: 6 },
+      weeklyTodos:  { x: 4, y: 0, w: 5, h: 6 },
+      habitTracker: { x: 9, y: 0, w: 3, h: 4 },
+      musicPlayer:  { x: 9, y: 4, w: 3, h: 5 }
     })
   },
 
@@ -38,12 +39,12 @@ const settingsSchema = new mongoose.Schema({
   }
 }, { timestamps: true });
 
-// Singleton – always get or create the one settings document
-settingsSchema.statics.getSettings = async function () {
-  let s = await this.findOne();
-  if (!s) s = await this.create({});
+// Per-user singleton — get or create settings for the given userId
+settingsSchema.statics.getSettings = async function (userId) {
+  let s = await this.findOne({ userId });
+  if (!s) s = await this.create({ userId });
 
-  // Back-fill gridLayout if missing (e.g. existing DB document)
+  // Back-fill gridLayout if missing (e.g. older documents)
   if (!s.gridLayout) {
     s.gridLayout = {
       calendar:     { x: 0, y: 0, w: 4, h: 6 },
@@ -55,7 +56,6 @@ settingsSchema.statics.getSettings = async function () {
     await s.save();
   }
 
-  // Back-fill musicPlayer in gridLayout for existing docs that don't have it
   if (s.gridLayout && !s.gridLayout.musicPlayer) {
     s.gridLayout.musicPlayer = { x: 9, y: 4, w: 3, h: 5 };
     s.markModified('gridLayout');
