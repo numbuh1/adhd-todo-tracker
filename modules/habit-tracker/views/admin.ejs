@@ -1,0 +1,159 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+    <div class="alert alert-success">✅ Saved!</div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <!-- ── Module Settings ─────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">⚙️ Module Settings</h2>
+    <form action="/admin/habit-tracker/settings" method="POST">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Days to show on Dashboard</label>
+          <input type="number" name="daysToShow" min="1" max="7"
+                 value="<%= daysToShow %>" class="form-control" style="width:80px">
+          <p class="form-hint">How many days (including today) to display. Default: 3.</p>
+        </div>
+        <div class="form-group" style="justify-content:flex-end; padding-bottom:.3rem">
+          <label class="checkbox-label">
+            <input type="checkbox" name="habitTrackerEnabled" <%= enabled ? 'checked' : '' %>>
+            Show on Dashboard
+          </label>
+        </div>
+        <div class="form-group form-group-btn">
+          <button type="submit" class="btn btn-primary">Save Settings</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Add Habit ──────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">➕ Add New Habit</h2>
+    <form action="/admin/habit-tracker/habits" method="POST" enctype="multipart/form-data">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input type="text" name="name" placeholder="e.g. Drink 2L water" required class="form-control">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Icon (emoji)</label>
+          <input type="text" name="icon" placeholder="💧" class="form-control" maxlength="4">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Color</label>
+          <input type="color" name="color" value="#7c3aed" class="color-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Photo (optional)</label>
+          <input type="file" name="photo" accept="image/*" class="form-control">
+        </div>
+        <div class="form-group form-group-btn">
+          <button type="submit" class="btn btn-primary">Add Habit</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Habits List ────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">📋 All Habits (<%= habits.length %>)</h2>
+
+    <% if (habits.length === 0) { %>
+      <p class="empty-msg">No habits yet. Add one above!</p>
+    <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Icon / Photo</th>
+          <th>Name</th>
+          <th>Color</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% habits.forEach(h => {
+          const hId = h._id.toString();
+        %>
+
+        <!-- View row -->
+        <tr id="hview-<%= hId %>">
+          <td>
+            <% if (h.photo) { %>
+              <img src="<%= h.photo %>" alt="<%= h.name %>" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">
+            <% } else { %>
+              <span style="font-size:1.4rem"><%= h.icon %></span>
+            <% } %>
+          </td>
+          <td><strong><%= h.name %></strong></td>
+          <td><span class="color-swatch" style="background:<%= h.color %>"></span></td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="toggleHabitEdit('<%= hId %>', true)">Edit</button>
+            <form action="/admin/habit-tracker/habits/<%= hId %>/delete" method="POST"
+                  style="display:inline" onsubmit="return confirm('Delete this habit and all its logs?')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- Edit row -->
+        <tr id="hedit-<%= hId %>" style="display:none; background:#faf5ff;">
+          <td colspan="4">
+            <form action="/admin/habit-tracker/habits/<%= hId %>/edit" method="POST"
+                  enctype="multipart/form-data">
+              <div class="form-row" style="padding:.5rem 0">
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Icon</label>
+                  <input type="text" name="icon" value="<%= h.icon %>"
+                         class="form-control form-control-sm" maxlength="4" style="width:60px">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Name</label>
+                  <input type="text" name="name" value="<%= h.name %>"
+                         class="form-control form-control-sm" required>
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Color</label>
+                  <input type="color" name="color" value="<%= h.color %>" class="color-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">New Photo</label>
+                  <input type="file" name="photo" accept="image/*" class="form-control form-control-sm">
+                  <% if (h.photo) { %>
+                    <label class="checkbox-label" style="margin-top:.25rem;font-size:.75rem">
+                      <input type="checkbox" name="removePhoto" value="1"> Remove current photo
+                    </label>
+                  <% } %>
+                </div>
+                <div class="form-group form-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                  <button type="button" class="btn btn-sm btn-secondary"
+                          onclick="toggleHabitEdit('<%= hId %>', false)">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </td>
+        </tr>
+
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+
+</div>
+
+<script>
+function toggleHabitEdit(id, show) {
+  document.getElementById('hview-' + id).style.display = show ? 'none' : '';
+  document.getElementById('hedit-' + id).style.display = show ? ''     : 'none';
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

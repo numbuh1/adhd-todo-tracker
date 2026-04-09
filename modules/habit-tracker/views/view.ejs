@@ -1,0 +1,65 @@
+<div class="module-card habit-module">
+
+  <div class="module-header">
+    <span class="module-icon">🔥</span>
+    <h2 class="module-title">Habits</h2>
+    <span class="week-badge"><%= daysToShow %> days</span>
+  </div>
+
+  <% if (!habits || habits.length === 0) { %>
+    <p class="no-items">No habits yet. <a href="/admin/habit-tracker" style="color:var(--accent)">Add some →</a></p>
+  <% } else { %>
+
+  <table class="habit-table">
+    <thead>
+      <tr>
+        <th class="habit-name-col"></th>
+        <% days.forEach(day => { %>
+        <th class="habit-day-col<%= day.isToday ? ' habit-col-today' : '' %>">
+          <span class="habit-day-label"><%= day.label %></span>
+        </th>
+        <% }); %>
+      </tr>
+    </thead>
+    <tbody>
+      <% habits.forEach(habit => {
+        const hId  = habit._id.toString();
+        const hMap = logMap[hId] || {};
+      %>
+      <tr class="habit-row">
+        <!-- Habit name + icon -->
+        <td class="habit-name-cell">
+          <% if (habit.photo) { %>
+            <img src="<%= habit.photo %>" class="habit-thumb" alt="<%= habit.name %>">
+          <% } else { %>
+            <span class="habit-icon"><%= habit.icon %></span>
+          <% } %>
+          <span class="habit-name"><%= habit.name %></span>
+        </td>
+
+        <!-- One cell per day -->
+        <% days.forEach(day => {
+          const log       = hMap[day.dateStr];
+          const isDone    = log ? log.completed : false;
+        %>
+        <td class="habit-check-cell<%= day.isToday ? ' habit-cell-today' : '' %>">
+          <label class="habit-check-label<%= isDone ? ' completed' : '' %>"
+                 data-habit-id="<%= hId %>"
+                 data-date="<%= day.dateStr %>"
+                 data-type="habit">
+            <input type="checkbox"
+                   class="habit-check"
+                   onclick="event.stopPropagation()"
+                   style="accent-color: <%= habit.color %>"
+                   <%= isDone ? 'checked' : '' %>>
+          </label>
+        </td>
+        <% }); %>
+
+      </tr>
+      <% }); %>
+    </tbody>
+  </table>
+
+  <% } %>
+</div>

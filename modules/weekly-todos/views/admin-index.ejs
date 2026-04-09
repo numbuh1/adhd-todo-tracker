@@ -1,0 +1,48 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+  <div class="admin-card">
+    <h2 class="card-title">📅 Select a Week to Edit</h2>
+    <p class="card-desc">Choose a week below to manage its goals and daily to-dos.</p>
+
+    <div class="week-grid">
+      <% weeks.forEach(w => { %>
+      <a href="/admin/weekly-todos/<%= w.weekStart %>/edit"
+         class="week-card<%= w.isCurrent ? ' week-card-current' : '' %>">
+        <div class="week-card-label">
+          <% if (w.isCurrent) { %><span class="current-badge">Current Week</span><% } %>
+          <strong><%= w.label %></strong>
+        </div>
+        <div class="week-card-stats">
+          <span>🎯 <%= w.goalCount %> goal<%= w.goalCount !== 1 ? 's' : '' %></span>
+          <span>✅ <%= w.todoCount %> to-do<%= w.todoCount !== 1 ? 's' : '' %></span>
+        </div>
+      </a>
+      <% }); %>
+    </div>
+
+    <!-- Custom week picker -->
+    <form action="" method="GET" class="custom-week-form" id="customWeekForm">
+      <label class="form-label">Jump to a specific week:</label>
+      <div class="form-row">
+        <input type="date" id="customDate" class="form-control" placeholder="Pick any date in the week">
+        <button type="button" class="btn btn-primary" onclick="goToWeek()">Go to Week</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function goToWeek() {
+  const val = document.getElementById('customDate').value;
+  if (!val) return;
+  const d   = new Date(val);
+  const dow = d.getDay(); // 0=Sun
+  const diff = dow === 0 ? -6 : 1 - dow;
+  d.setDate(d.getDate() + diff);
+  const iso = d.toISOString().slice(0,10);
+  window.location.href = `/admin/weekly-todos/${iso}/edit`;
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

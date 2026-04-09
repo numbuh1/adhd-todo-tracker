@@ -1,0 +1,140 @@
+<%- include(root + '/views/partials/admin-layout-top', { title: 'Edit Week: ' + weekLabel, activePage }) %>
+
+<div class="admin-content">
+
+  <div class="edit-week-header">
+    <a href="/admin/weekly-todos" class="btn btn-secondary btn-sm">← Back to Week Selector</a>
+    <h1 class="page-title">📝 <%= weekLabel %></h1>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       PART 1 — WEEKLY GOALS
+  ══════════════════════════════════════════════ -->
+  <div class="admin-card">
+    <h2 class="card-title">🎯 Weekly Goals</h2>
+
+    <!-- Add goal -->
+    <form action="/admin/weekly-todos/<%= weekStart %>/goals" method="POST" class="add-form">
+      <div class="form-row">
+        <input type="text" name="text" placeholder="New goal…" class="form-control" required>
+        <button type="submit" class="btn btn-primary">Add Goal</button>
+      </div>
+    </form>
+
+    <!-- Goals list -->
+    <% if (week.goals && week.goals.length > 0) { %>
+    <ul class="item-list">
+      <% week.goals.forEach(goal => { %>
+      <li class="item-row" id="goal-<%= goal._id %>">
+
+        <!-- View mode -->
+        <div class="item-view">
+          <span class="item-check-icon"><%= goal.completed ? '✅' : '⬜' %></span>
+          <span class="item-text<%= goal.completed ? ' item-done' : '' %>"><%= goal.text %></span>
+          <div class="item-actions">
+            <button class="btn btn-sm btn-secondary" onclick="toggleItemEdit('goal', '<%= goal._id %>')">Edit</button>
+            <form action="/admin/weekly-todos/<%= weekStart %>/goals/<%= goal._id %>/delete" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this goal?')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- Edit mode -->
+        <form action="/admin/weekly-todos/<%= weekStart %>/goals/<%= goal._id %>/edit" method="POST"
+              id="edit-goal-<%= goal._id %>" class="item-edit" style="display:none">
+          <div class="form-row">
+            <input type="text" name="text" value="<%= goal.text %>" class="form-control" required>
+            <button type="submit" class="btn btn-sm btn-primary">Save</button>
+            <button type="button" class="btn btn-sm btn-secondary"
+                    onclick="toggleItemEdit('goal', '<%= goal._id %>')">Cancel</button>
+          </div>
+        </form>
+
+      </li>
+      <% }); %>
+    </ul>
+    <% } else { %>
+    <p class="empty-msg">No goals yet. Add one above!</p>
+    <% } %>
+  </div>
+
+  <!-- ══════════════════════════════════════════════
+       PART 2 — DAILY TO-DOS
+  ══════════════════════════════════════════════ -->
+  <div class="admin-card">
+    <h2 class="card-title">📋 Daily To-Dos</h2>
+
+    <div class="days-edit-grid">
+      <% week.days.forEach((day, i) => {
+        const dateLabel = dayjs(day.date).format('ddd, MMM D');
+        const isToday   = dayjs(day.date).format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD');
+      %>
+      <div class="day-edit-card<%= isToday ? ' day-edit-today' : '' %>">
+        <div class="day-edit-header">
+          <span><%= dateLabel %></span>
+          <% if (isToday) { %><span class="today-badge">today</span><% } %>
+        </div>
+
+        <!-- Add todo for this day -->
+        <form action="/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos" method="POST" class="add-form-sm">
+          <div class="form-row-sm">
+            <input type="text" name="text" placeholder="Add to-do…" class="form-control form-control-sm">
+            <button type="submit" class="btn btn-xs btn-primary">+</button>
+          </div>
+        </form>
+
+        <!-- Todos list for this day -->
+        <% if (day.todos && day.todos.length > 0) { %>
+        <ul class="item-list-sm">
+          <% day.todos.forEach(todo => { %>
+          <li class="item-row-sm" id="todo-<%= todo._id %>">
+
+            <div class="item-view-sm">
+              <span class="item-text-sm<%= todo.completed ? ' item-done' : '' %>"><%= todo.text %></span>
+              <div class="item-actions-sm">
+                <button class="btn btn-xs btn-secondary" onclick="toggleItemEdit('todo', '<%= todo._id %>')">✏️</button>
+                <form action="/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos/<%= todo._id %>/delete"
+                      method="POST" style="display:inline"
+                      onsubmit="return confirm('Delete?')">
+                  <button type="submit" class="btn btn-xs btn-danger">🗑️</button>
+                </form>
+              </div>
+            </div>
+
+            <form action="/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos/<%= todo._id %>/edit"
+                  method="POST" id="edit-todo-<%= todo._id %>" class="item-edit-sm" style="display:none">
+              <div class="form-row-sm">
+                <input type="text" name="text" value="<%= todo.text %>" class="form-control form-control-sm" required>
+                <button type="submit" class="btn btn-xs btn-primary">✓</button>
+                <button type="button" class="btn btn-xs btn-secondary"
+                        onclick="toggleItemEdit('todo', '<%= todo._id %>')">✕</button>
+              </div>
+            </form>
+
+          </li>
+          <% }); %>
+        </ul>
+        <% } else { %>
+        <p class="empty-day">Nothing yet</p>
+        <% } %>
+
+      </div>
+      <% }); %>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function toggleItemEdit(type, id) {
+  const viewEl = document.querySelector(`#${type}-${id} .item-view, #${type}-${id} .item-view-sm`);
+  const editEl = document.getElementById(`edit-${type}-${id}`);
+  if (!viewEl || !editEl) return;
+  const isHidden = editEl.style.display === 'none';
+  viewEl.style.display = isHidden ? 'none' : '';
+  editEl.style.display = isHidden ? '' : 'none';
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

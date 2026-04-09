@@ -1,0 +1,72 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+  <div class="alert alert-success">✅ Settings saved!</div>
+  <% } %>
+  <% if (error) { %>
+  <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <!-- ══════════════════════════════════════════════════════
+       HOW IT WORKS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="admin-card" style="background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.25);">
+    <h2 class="card-title">🎵 Local File Player</h2>
+    <p style="font-size:.88rem; line-height:1.6; opacity:.85; margin:0">
+      The music player works entirely on your device — no files are uploaded to the server.
+      On the dashboard, click <strong>📂 Load Songs</strong> or drag &amp; drop audio files
+      directly onto the player to load them. It automatically reads the embedded
+      <strong>ID3 tags</strong> from your files (title, artist, album art).
+      Your queue resets on page refresh, so just reload your files when you return.
+    </p>
+    <div style="margin-top:1rem; display:flex; gap:8px; flex-wrap:wrap">
+      <span style="background:rgba(255,255,255,0.08); border-radius:20px; padding:4px 12px; font-size:.78rem">🎵 MP3</span>
+      <span style="background:rgba(255,255,255,0.08); border-radius:20px; padding:4px 12px; font-size:.78rem">🎵 WAV</span>
+      <span style="background:rgba(255,255,255,0.08); border-radius:20px; padding:4px 12px; font-size:.78rem">🎵 OGG</span>
+      <span style="background:rgba(255,255,255,0.08); border-radius:20px; padding:4px 12px; font-size:.78rem">🎵 FLAC</span>
+      <span style="background:rgba(255,255,255,0.08); border-radius:20px; padding:4px 12px; font-size:.78rem">🎵 M4A / AAC</span>
+      <span style="background:rgba(255,255,255,0.08); border-radius:20px; padding:4px 12px; font-size:.78rem">🎵 OPUS / WEBM</span>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       DISPLAY SETTINGS
+  ═══════════════════════════════════════════════════════ -->
+  <div class="admin-card">
+    <h2 class="card-title">⚙️ Display Settings</h2>
+    <form action="/admin/music-player/settings" method="POST">
+
+      <div class="settings-grid">
+        <label class="checkbox-label">
+          <input type="checkbox" name="musicPlayerEnabled"
+                 <%= ms.enabled !== false ? 'checked' : '' %>>
+          Show Music Player on Dashboard
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="showSongName"
+                 <%= ms.showSongName !== false ? 'checked' : '' %>>
+          Show song name &amp; artist
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="showJacket"
+                 <%= ms.showJacket !== false ? 'checked' : '' %>>
+          Show album art / jacket
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="showPlaylist"
+                 <%= ms.showPlaylist !== false ? 'checked' : '' %>>
+          Show song queue / playlist
+        </label>
+      </div>
+
+      <div class="form-actions" style="margin-top:1.25rem">
+        <button type="submit" class="btn btn-primary">💾 Save Settings</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

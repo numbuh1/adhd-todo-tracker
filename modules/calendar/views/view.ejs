@@ -1,0 +1,82 @@
+<%
+// ── Calendar grid calculation ──────────────────────────────
+// Convert Sun-start (0=Sun) to Mon-start (0=Mon)
+const firstDayMon = (firstDayOfMonth + 6) % 7;
+const totalRows   = Math.ceil((firstDayMon + daysInMonth) / 7);
+const DAY_LABELS  = ['Mo','Tu','We','Th','Fr','Sa','Su'];
+
+function padDate(n) { return String(n).padStart(2, '0'); }
+function dateKey(d) { return `${year}-${padDate(monthNumber)}-${padDate(d)}`; }
+%>
+
+<div class="module-card calendar-module">
+  <!-- Month heading -->
+  <div class="module-header">
+    <span class="module-icon">📅</span>
+    <h2 class="module-title"><%= currentMonth %></h2>
+  </div>
+
+  <!-- Calendar grid -->
+  <table class="cal-table">
+    <thead>
+      <tr>
+        <% DAY_LABELS.forEach(l => { %><th><%= l %></th><% }); %>
+      </tr>
+    </thead>
+    <tbody>
+      <%
+      let dayCount = 1;
+      for (let row = 0; row < totalRows; row++) {
+      %>
+      <tr>
+        <% for (let col = 0; col < 7; col++) {
+          const cellIdx   = row * 7 + col;
+          const isBlank   = cellIdx < firstDayMon || dayCount > daysInMonth;
+          const dKey      = !isBlank ? dateKey(dayCount) : null;
+          const isToday   = dKey === today;
+          const dayEvents = (dKey && eventsByDay[dKey]) ? eventsByDay[dKey] : [];
+          const tooltip   = dayEvents.map(e => e.title + (e.description ? ': ' + e.description : '')).join('\n');
+        %>
+        <td class="cal-cell<%= isToday ? ' cal-today' : '' %><%= dayEvents.length ? ' has-events' : '' %>"
+            <% if (tooltip) { %>title="<%= tooltip %>"<% } %>>
+          <% if (!isBlank) { %>
+            <span class="cal-day-num"><%= dayCount %></span>
+            <% if (dayEvents.length > 0) { %>
+              <span class="event-dots">
+                <% dayEvents.slice(0, 3).forEach(ev => { %>
+                  <span class="event-dot" style="background:<%= ev.color %>"></span>
+                <% }); %>
+              </span>
+            <% } %>
+          <% } %>
+          <% if (!isBlank) dayCount++; %>
+        </td>
+        <% } %>
+      </tr>
+      <% } %>
+    </tbody>
+  </table>
+
+  <!-- Upcoming events list -->
+  <% if (upcomingEvents && upcomingEvents.length > 0) { %>
+  <div class="upcoming-events">
+    <h3 class="upcoming-title">Upcoming</h3>
+    <ul class="event-list">
+      <% upcomingEvents.forEach(ev => { %>
+      <li class="event-item">
+        <span class="event-dot-sm" style="background:<%= ev.color %>"></span>
+        <span class="event-date-label">
+          <%= dayjs(ev.date).format('MMM D') %>
+        </span>
+        <span class="event-name"><%= ev.title %></span>
+        <% if (ev.description) { %>
+          <span class="event-desc"> — <%= ev.description %></span>
+        <% } %>
+      </li>
+      <% }); %>
+    </ul>
+  </div>
+  <% } else { %>
+  <p class="no-events">No upcoming events</p>
+  <% } %>
+</div>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADHD Tracker — Dashboard</title>
+
+  <!-- Gridstack -->
+  <link href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack.min.css" rel="stylesheet">
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="/css/dashboard.css">
+
+  <style>
+    :root {
+      --accent:  <%= settings.theme.accentColor %>;
+      --bg:      <%= settings.theme.backgroundColor %>;
+      --card:    <%= settings.theme.cardColor %>;
+      --text:    <%= settings.theme.textColor %>;
+    }
+    body { background-color: var(--bg); color: var(--text); }
+    <% if (settings.theme.wallpaper) { %>
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background: url('<%= settings.theme.wallpaper %>') center/cover no-repeat;
+      opacity: <%= settings.theme.wallpaperOpacity %>;
+      pointer-events: none;
+    }
+    <% } %>
+    .module-card            { background: var(--card); }
+    .cal-today .cal-day-num { background: var(--accent); }
+    .day-today .day-header  { border-color: var(--accent); }
+    .day-today .day-label   { color: var(--accent); }
+    .today-badge            { background: var(--accent); }
+    .module-icon            { color: var(--accent); }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────── -->
+  <header class="dashboard-header" id="dash-header">
+    <div class="header-left">
+      <span class="header-logo">🧠</span>
+      <span class="header-title">ADHD Tracker</span>
+    </div>
+    <div class="header-right">
+      <span id="clock-date" class="header-date"></span>
+      <span id="clock-time" class="header-time"></span>
+      <a href="/admin" class="header-admin-link" title="Admin">⚙️</a>
+    </div>
+  </header>
+
+  <!-- ── Gridstack modules ──────────────────────────────── -->
+  <%
+  const GL = settings.gridLayout || {};
+  const DEFAULTS = {
+    calendar:     { x: 0, y: 0, w: 4, h: 6 },
+    weeklyTodos:  { x: 4, y: 0, w: 5, h: 6 },
+    habitTracker: { x: 9, y: 0, w: 3, h: 4 },
+    musicPlayer:  { x: 9, y: 4, w: 3, h: 5 }
+  };
+  function gs(key) {
+    return Object.assign({}, DEFAULTS[key], GL[key] || {});
+  }
+  %>
+
+  <div class="grid-stack" id="main-grid">
+
+    <% if (calendarEnabled) { const p = gs('calendar'); %>
+    <div class="grid-stack-item"
+         gs-id="calendar"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
+         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- calendarHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (weeklyEnabled) { const p = gs('weeklyTodos'); %>
+    <div class="grid-stack-item"
+         gs-id="weeklyTodos"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
+         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- weeklyHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (habitEnabled) { const p = gs('habitTracker'); %>
+    <div class="grid-stack-item"
+         gs-id="habitTracker"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
+         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- habitHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (musicEnabled) { const p = gs('musicPlayer'); %>
+    <div class="grid-stack-item"
+         gs-id="musicPlayer"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
+         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- musicHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (!calendarEnabled && !weeklyEnabled && !habitEnabled && !musicEnabled) { %>
+    <div class="empty-dashboard">
+      <p>No modules enabled. <a href="/admin/settings">Go to Settings →</a></p>
+    </div>
+    <% } %>
+
+  </div>
+
+  <!-- Gridstack JS (must come before dashboard.js) -->
+  <script src="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-all.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

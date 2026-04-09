@@ -1,0 +1,133 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+  <div class="alert alert-success">✅ Settings saved successfully!</div>
+  <% } %>
+  <% if (error) { %>
+  <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <form action="/admin/settings" method="POST" enctype="multipart/form-data">
+
+    <!-- ── Theme ──────────────────────────────────────────── -->
+    <div class="admin-card">
+      <h2 class="card-title">🎨 Theme</h2>
+
+      <div class="settings-grid">
+        <div class="form-group">
+          <label class="form-label">Accent Color</label>
+          <div class="color-picker-row">
+            <input type="color" name="accentColor" value="<%= settings.theme.accentColor %>" class="color-input-lg">
+            <input type="text" id="accentColorText" value="<%= settings.theme.accentColor %>"
+                   class="form-control form-control-sm" style="width:100px"
+                   oninput="document.querySelector('[name=accentColor]').value=this.value">
+          </div>
+          <p class="form-hint">Used for highlights, today indicator, and active items.</p>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Background Color</label>
+          <div class="color-picker-row">
+            <input type="color" name="backgroundColor" value="<%= settings.theme.backgroundColor %>" class="color-input-lg">
+            <input type="text" value="<%= settings.theme.backgroundColor %>"
+                   class="form-control form-control-sm" style="width:100px"
+                   oninput="document.querySelector('[name=backgroundColor]').value=this.value">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Card Color</label>
+          <div class="color-picker-row">
+            <input type="color" name="cardColor" value="<%= settings.theme.cardColor %>" class="color-input-lg">
+            <input type="text" value="<%= settings.theme.cardColor %>"
+                   class="form-control form-control-sm" style="width:100px"
+                   oninput="document.querySelector('[name=cardColor]').value=this.value">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Text Color</label>
+          <div class="color-picker-row">
+            <input type="color" name="textColor" value="<%= settings.theme.textColor %>" class="color-input-lg">
+            <input type="text" value="<%= settings.theme.textColor %>"
+                   class="form-control form-control-sm" style="width:100px"
+                   oninput="document.querySelector('[name=textColor]').value=this.value">
+          </div>
+        </div>
+      </div>
+
+      <!-- Wallpaper -->
+      <div class="form-group" style="margin-top:1.5rem">
+        <label class="form-label">Dashboard Wallpaper</label>
+        <% if (settings.theme.wallpaper) { %>
+          <div class="wallpaper-preview">
+            <img src="<%= settings.theme.wallpaper %>" alt="Current wallpaper">
+            <span>Current wallpaper</span>
+          </div>
+          <label class="checkbox-label">
+            <input type="checkbox" name="removeWallpaper" value="1"> Remove wallpaper
+          </label>
+        <% } %>
+        <input type="file" name="wallpaper" accept="image/*" class="form-control" style="margin-top:.5rem">
+        <p class="form-hint">Max 10 MB. PNG, JPG, WEBP supported.</p>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Wallpaper Opacity: <span id="opacityVal"><%= settings.theme.wallpaperOpacity %></span></label>
+        <input type="range" name="wallpaperOpacity" min="0" max="1" step="0.05"
+               value="<%= settings.theme.wallpaperOpacity %>" class="range-input"
+               oninput="document.getElementById('opacityVal').textContent = this.value">
+      </div>
+    </div>
+
+    <!-- ── Module Visibility ───────────────────────────────── -->
+    <div class="admin-card">
+      <h2 class="card-title">🧩 Module Visibility</h2>
+
+      <div class="settings-grid">
+        <label class="checkbox-label">
+          <input type="checkbox" name="calendarEnabled"
+                 <%= settings.modules.calendar.enabled ? 'checked' : '' %>>
+          Show Calendar & Events on Dashboard
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="weeklyTodosEnabled"
+                 <%= settings.modules.weeklyTodos.enabled ? 'checked' : '' %>>
+          Show Weekly Goals & To-Dos on Dashboard
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="habitTrackerEnabled"
+                 <%= (settings.modules.habitTracker && settings.modules.habitTracker.enabled) ? 'checked' : '' %>>
+          Show Habit Tracker on Dashboard
+        </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="musicPlayerEnabled"
+                 <%= (settings.modules.musicPlayer && settings.modules.musicPlayer.enabled) ? 'checked' : '' %>>
+          Show Music Player on Dashboard
+        </label>
+      </div>
+    </div>
+
+    <!-- ── Layout ──────────────────────────────────────────── -->
+    <div class="admin-card">
+      <h2 class="card-title">📐 Module Layout</h2>
+      <p class="card-desc">
+        Module positions and widths are managed directly on the dashboard via
+        <strong>drag &amp; drop</strong>. Grab a module by its header to move it;
+        drag the left or right edge to resize it. Changes save automatically.
+      </p>
+      <a href="/" target="_blank" class="btn btn-secondary" style="margin-top:.25rem">
+        Open Dashboard to arrange →
+      </a>
+    </div>
+
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary btn-lg">💾 Save Settings</button>
+    </div>
+
+  </form>
+</div>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

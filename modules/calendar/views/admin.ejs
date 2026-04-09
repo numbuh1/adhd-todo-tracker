@@ -1,0 +1,127 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (error) { %>
+    <div class="alert alert-error">⚠️  <%= error %></div>
+  <% } %>
+
+  <!-- ── Add Event Form ──────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">➕ Add New Event</h2>
+    <form action="/admin/calendar/events" method="POST">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input type="date" name="date" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Title *</label>
+          <input type="text" name="title" placeholder="Event title" required class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <input type="text" name="description" placeholder="Optional details" class="form-control">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Dot Color</label>
+          <input type="color" name="color" value="#f59e0b" class="color-input">
+        </div>
+        <div class="form-group form-group-btn">
+          <button type="submit" class="btn btn-primary">Add Event</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Events List ─────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">📋 All Events (<%= events.length %>)</h2>
+
+    <% if (events.length === 0) { %>
+      <p class="empty-msg">No events yet. Add one above!</p>
+    <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Color</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% events.forEach(ev => {
+          const evId = ev._id.toString();
+        %>
+
+        <!-- ── View row ── -->
+        <tr id="view-<%= evId %>">
+          <td><%= dayjs(ev.date).format('MMM D, YYYY') %></td>
+          <td><%= ev.title %></td>
+          <td><%= ev.description || '—' %></td>
+          <td><span class="color-swatch" style="background:<%= ev.color %>"></span></td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="startEdit('<%= evId %>')">Edit</button>
+            <form action="/admin/calendar/events/<%= evId %>/delete" method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this event?')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- ── Edit row (hidden by default) ── -->
+        <tr id="edit-<%= evId %>" style="display:none; background:#faf5ff;">
+          <td colspan="5">
+            <form action="/admin/calendar/events/<%= evId %>/edit" method="POST">
+              <div class="form-row" style="padding:.5rem 0">
+                <div class="form-group">
+                  <label class="form-label">Date</label>
+                  <input type="date" name="date" value="<%= dayjs(ev.date).format('YYYY-MM-DD') %>"
+                         class="form-control form-control-sm" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Title</label>
+                  <input type="text" name="title" value="<%= ev.title %>"
+                         class="form-control form-control-sm" required>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Description</label>
+                  <input type="text" name="description" value="<%= ev.description %>"
+                         class="form-control form-control-sm">
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Color</label>
+                  <input type="color" name="color" value="<%= ev.color %>" class="color-input">
+                </div>
+                <div class="form-group form-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                  <button type="button" class="btn btn-sm btn-secondary"
+                          onclick="cancelEdit('<%= evId %>')">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </td>
+        </tr>
+
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+
+</div>
+
+<script>
+function startEdit(id) {
+  document.getElementById('view-' + id).style.display = 'none';
+  document.getElementById('edit-' + id).style.display = '';
+}
+function cancelEdit(id) {
+  document.getElementById('edit-' + id).style.display = 'none';
+  document.getElementById('view-' + id).style.display = '';
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

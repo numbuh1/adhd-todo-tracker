@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= title %> — ADHD Tracker Admin</title>
+  <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+
+<div class="admin-wrapper">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-brand">
+      <span class="brand-icon">🧠</span>
+      <span class="brand-name">ADHD Tracker</span>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin" class="nav-item<%= activePage === 'home' ? ' active' : '' %>">
+        <span class="nav-icon">🏠</span> Dashboard
+      </a>
+      <a href="/admin/calendar" class="nav-item<%= activePage === 'calendar' ? ' active' : '' %>">
+        <span class="nav-icon">📅</span> Calendar & Events
+      </a>
+      <a href="/admin/weekly-todos" class="nav-item<%= activePage === 'weekly-todos' ? ' active' : '' %>">
+        <span class="nav-icon">✅</span> Weekly To-Dos
+      </a>
+      <a href="/admin/habit-tracker" class="nav-item<%= activePage === 'habit-tracker' ? ' active' : '' %>">
+        <span class="nav-icon">🔥</span> Habit Tracker
+      </a>
+      <a href="/admin/music-player" class="nav-item<%= activePage === 'music-player' ? ' active' : '' %>">
+        <span class="nav-icon">🎵</span> Music Player
+      </a>
+      <a href="/admin/settings" class="nav-item<%= activePage === 'settings' ? ' active' : '' %>">
+        <span class="nav-icon">⚙️</span> Settings
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="/" target="_blank" class="view-dashboard-btn">
+        📊 Open Dashboard
+      </a>
+    </div>
+  </aside>
+
+  <!-- Main area -->
+  <main class="admin-main">
+    <div class="admin-topbar">
+      <h1 class="topbar-title"><%= title %></h1>
+    </div>

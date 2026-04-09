@@ -1,0 +1,56 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <div class="dash-welcome">
+    <h2>Welcome back! 👋</h2>
+    <p>Manage your ADHD tracker from here. Choose a section from the sidebar.</p>
+  </div>
+
+  <div class="admin-grid">
+
+    <a href="/admin/calendar" class="admin-quick-card">
+      <span class="qcard-icon">📅</span>
+      <div>
+        <h3>Calendar & Events</h3>
+        <p>Add, edit, or remove events from your calendar.</p>
+      </div>
+    </a>
+
+    <a href="/admin/weekly-todos" class="admin-quick-card">
+      <span class="qcard-icon">✅</span>
+      <div>
+        <h3>Weekly Goals & To-Dos</h3>
+        <p>Set goals and daily tasks for any week.</p>
+      </div>
+    </a>
+
+    <a href="/admin/habit-tracker" class="admin-quick-card">
+      <span class="qcard-icon">🔥</span>
+      <div>
+        <h3>Habit Tracker</h3>
+        <p>Add habits and track your daily streaks.</p>
+      </div>
+    </a>
+
+    <a href="/admin/settings" class="admin-quick-card">
+      <span class="qcard-icon">⚙️</span>
+      <div>
+        <h3>Settings</h3>
+        <p>Customise theme, colours, wallpaper, and module layout.</p>
+      </div>
+    </a>
+
+    <a href="/" target="_blank" class="admin-quick-card">
+      <span class="qcard-icon">📊</span>
+      <div>
+        <h3>Open Dashboard</h3>
+        <p>Preview the display page in a new tab.</p>
+      </div>
+    </a>
+
+  </div>
+
+</div>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>
