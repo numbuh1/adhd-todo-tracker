@@ -1,0 +1,163 @@
+<div class="module-card video-player-module" id="videoPlayerCard">
+
+  <div class="module-header" style="cursor:default">
+    <span class="module-icon">🎬</span>
+    <h2 class="module-title">Video Player</h2>
+    <button class="vp-change-btn" id="vpChangeBtn" title="Change video">🔗 Set URL</button>
+  </div>
+
+  <!-- URL Input overlay -->
+  <div class="vp-url-bar" id="vpUrlBar" style="display:none">
+    <input type="text" class="vp-url-input" id="vpUrlInput"
+           placeholder="Paste YouTube URL…"
+           value="<%= lastUrl %>">
+    <button class="vp-url-submit" id="vpUrlSubmit">▶ Play</button>
+    <button class="vp-url-cancel" id="vpUrlCancel">✕</button>
+  </div>
+
+  <!-- Player area -->
+  <div class="vp-body" id="vpBody">
+    <% if (lastUrl) { %>
+      <div class="vp-frame-wrap">
+        <iframe id="vpIframe" class="vp-iframe"
+                src="https://www.youtube.com/embed/<%= extractYouTubeId(lastUrl) %>?rel=0&modestbranding=1"
+                frameborder="0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+      </div>
+    <% } else { %>
+      <div class="vp-placeholder" id="vpPlaceholder">
+        <span class="vp-ph-icon">▶</span>
+        <span class="vp-ph-text">Click <strong>Set URL</strong> to load a YouTube video</span>
+      </div>
+    <% } %>
+  </div>
+
+</div>
+
+<style>
+.video-player-module { display: flex; flex-direction: column; height: 100%; }
+.video-player-module .module-header { flex-shrink: 0; }
+
+.vp-change-btn {
+  margin-left: auto;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; color: inherit; font-size: .75rem;
+  padding: 3px 10px; cursor: pointer; white-space: nowrap;
+  transition: background .15s;
+}
+.vp-change-btn:hover { background: rgba(255,255,255,0.16); }
+
+/* URL bar */
+.vp-url-bar {
+  display: flex; gap: 6px; padding: 6px 10px 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  flex-shrink: 0;
+}
+.vp-url-input {
+  flex: 1;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px; padding: 6px 10px;
+  color: inherit; font-size: .85rem; outline: none;
+  transition: border-color .2s;
+}
+.vp-url-input:focus { border-color: var(--accent); }
+.vp-url-submit {
+  background: var(--accent); border: none; border-radius: 8px;
+  color: #fff; padding: 6px 14px; font-size: .82rem;
+  cursor: pointer; white-space: nowrap;
+  transition: filter .15s;
+}
+.vp-url-submit:hover { filter: brightness(1.15); }
+.vp-url-cancel {
+  background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px; color: inherit; padding: 6px 10px; cursor: pointer;
+  transition: background .15s;
+}
+.vp-url-cancel:hover { background: rgba(255,255,255,0.15); }
+
+/* Body */
+.vp-body { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.vp-frame-wrap {
+  flex: 1; position: relative;
+  background: #000; border-radius: 0 0 var(--radius, 12px) var(--radius, 12px);
+  overflow: hidden; min-height: 0;
+}
+.vp-iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.vp-placeholder {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 10px;
+  opacity: .4; padding: 2rem;
+}
+.vp-ph-icon { font-size: 2.5rem; }
+.vp-ph-text  { font-size: .85rem; text-align: center; }
+</style>
+
+<script>
+(function initVideoPlayer() {
+  const BP         = window.BASE_PATH || '';
+  const card       = document.getElementById('videoPlayerCard');
+  const changeBtn  = document.getElementById('vpChangeBtn');
+  const urlBar     = document.getElementById('vpUrlBar');
+  const urlInput   = document.getElementById('vpUrlInput');
+  const submitBtn  = document.getElementById('vpUrlSubmit');
+  const cancelBtn  = document.getElementById('vpUrlCancel');
+  const body       = document.getElementById('vpBody');
+
+  function extractId(url) {
+    if (!url) return null;
+    const patterns = [
+      /youtu\.be\/([a-zA-Z0-9_-]{11})/,
+      /[?&]v=([a-zA-Z0-9_-]{11})/,
+      /embed\/([a-zA-Z0-9_-]{11})/,
+      /shorts\/([a-zA-Z0-9_-]{11})/
+    ];
+    for (const p of patterns) {
+      const m = url.match(p);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  function loadVideo(url) {
+    const id = extractId(url);
+    if (!id) { urlInput.style.borderColor = '#f87171'; return; }
+    urlInput.style.borderColor = '';
+
+    // Build or update the iframe
+    let wrap = body.querySelector('.vp-frame-wrap');
+    if (!wrap) {
+      body.innerHTML = '<div class="vp-frame-wrap"><iframe id="vpIframe" class="vp-iframe" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+      wrap = body.querySelector('.vp-frame-wrap');
+    }
+    const iframe = wrap.querySelector('#vpIframe') || wrap.querySelector('iframe');
+    iframe.src = `https://www.youtube.com/embed/${id}?rel=0&modestbranding=1&autoplay=1`;
+
+    // Persist URL
+    fetch(BP + '/admin/video-player/api/save-url', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    }).catch(() => {});
+
+    // Close URL bar
+    urlBar.style.display = 'none';
+    changeBtn.textContent = '🔗 Change';
+  }
+
+  changeBtn.addEventListener('click', () => {
+    const isOpen = urlBar.style.display !== 'none';
+    urlBar.style.display = isOpen ? 'none' : 'flex';
+    if (!isOpen) { urlInput.focus(); urlInput.select(); }
+  });
+
+  submitBtn.addEventListener('click', () => loadVideo(urlInput.value.trim()));
+  cancelBtn.addEventListener('click',  () => { urlBar.style.display = 'none'; });
+  urlInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') loadVideo(urlInput.value.trim());
+    if (e.key === 'Escape') urlBar.style.display = 'none';
+  });
+})();
+</script>

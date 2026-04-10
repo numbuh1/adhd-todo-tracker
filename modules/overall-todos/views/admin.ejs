@@ -1,0 +1,103 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+  <div class="alert alert-success">✅ Saved!</div>
+  <% } %>
+  <% if (error) { %>
+  <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <!-- ── Add Item ──────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">➕ Add To-Do</h2>
+    <form action="<%= basePath %>/admin/overall-todos/items" method="POST">
+      <div class="form-row">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Task *</label>
+          <input type="text" name="text" placeholder="What needs to be done?" required
+                 class="form-control" autofocus>
+        </div>
+        <div class="form-group form-group-btn">
+          <button type="submit" class="btn btn-primary">Add</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Items List ────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">
+      📋 All To-Dos (<%= items.length %>)
+      <span style="font-size:.72rem; opacity:.5; font-weight:400; margin-left:.5rem">drag ☰ to reorder</span>
+    </h2>
+
+    <% if (items.length === 0) { %>
+      <p class="empty-msg">No to-dos yet. Add one above!</p>
+    <% } else { %>
+    <ul class="sortable-list" id="overallTodosList"
+        data-sortable-url="<%= basePath %>/admin/overall-todos/api/reorder">
+      <% items.forEach(item => { %>
+      <li class="sortable-item" data-id="<%= item._id %>"
+          id="oti-<%= item._id %>">
+
+        <!-- View mode -->
+        <div class="sort-row">
+          <span class="sort-handle">☰</span>
+          <span class="sort-check <%= item.completed ? 'sort-done' : '' %>">
+            <%= item.completed ? '✅' : '⬜' %>
+          </span>
+          <span class="sort-text <%= item.completed ? 'text-done' : '' %>" style="flex:1">
+            <%= item.text %>
+          </span>
+          <!-- Visible toggle -->
+          <form action="<%= basePath %>/admin/overall-todos/items/<%= item._id %>/toggle-visible"
+                method="POST" style="display:inline">
+            <button type="submit" class="btn btn-xs <%= item.visible ? 'btn-secondary' : 'btn-muted' %>"
+                    title="<%= item.visible ? 'Shown on Dashboard' : 'Hidden from Dashboard' %>">
+              <%= item.visible ? '👁 Shown' : '🙈 Hidden' %>
+            </button>
+          </form>
+          <button class="btn btn-xs btn-secondary" onclick="toggleOtiEdit('<%= item._id %>', true)">Edit</button>
+          <form action="<%= basePath %>/admin/overall-todos/items/<%= item._id %>/delete"
+                method="POST" style="display:inline"
+                onsubmit="return confirm('Delete this to-do?')">
+            <button type="submit" class="btn btn-xs btn-danger">✕</button>
+          </form>
+        </div>
+
+        <!-- Edit mode -->
+        <form action="<%= basePath %>/admin/overall-todos/items/<%= item._id %>/edit"
+              method="POST" id="oti-edit-<%= item._id %>" class="sort-edit-row" style="display:none">
+          <input type="text" name="text" value="<%= item.text %>"
+                 class="form-control form-control-sm" required style="flex:1">
+          <button type="submit" class="btn btn-sm btn-primary">Save</button>
+          <button type="button" class="btn btn-sm btn-secondary"
+                  onclick="toggleOtiEdit('<%= item._id %>', false)">Cancel</button>
+        </form>
+
+      </li>
+      <% }); %>
+    </ul>
+    <% } %>
+  </div>
+
+</div>
+
+<style>
+.btn-muted {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  opacity: .6;
+}
+</style>
+
+<script>
+function toggleOtiEdit(id, show) {
+  document.getElementById('oti-' + id).querySelector('.sort-row').style.display      = show ? 'none' : '';
+  document.getElementById('oti-edit-' + id).style.display = show ? 'flex' : 'none';
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

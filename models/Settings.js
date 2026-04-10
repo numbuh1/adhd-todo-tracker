@@ -9,7 +9,8 @@ const settingsSchema = new mongoose.Schema({
     cardColor:         { type: String, default: '#12122a' },
     textColor:         { type: String, default: '#e2e8f0' },
     wallpaper:         { type: String, default: null },
-    wallpaperOpacity:  { type: Number, default: 0.15, min: 0, max: 1 }
+    wallpaperOpacity:  { type: Number, default: 0.15, min: 0, max: 1 },
+    moduleOpacity:     { type: Number, default: 1,    min: 0, max: 1 }
   },
 
   // gridLayout stores Gridstack positions { x, y, w, h } per module key.
@@ -40,6 +41,13 @@ const settingsSchema = new mongoose.Schema({
     },
     progress: {
       enabled: { type: Boolean, default: true }
+    },
+    overallTodos: {
+      enabled: { type: Boolean, default: true }
+    },
+    videoPlayer: {
+      enabled: { type: Boolean, default: true },
+      lastUrl:  { type: String,  default: '' }
     }
   }
 }, { timestamps: true });
@@ -63,12 +71,14 @@ settingsSchema.statics.getSettings = async function (userId) {
     await s.save();
   }
 
-  // Back-fill individual keys added in later versions
+  // Back-fill individual grid keys added in later versions
   let dirty = false;
   const backfill = {
     musicPlayer:  { x: 8, y: 5, w: 4, h: 4 },
     weeklyGoals:  { x: 4, y: 0, w: 4, h: 3 },
-    progress:     { x: 0, y: 8, w: 12, h: 4 }
+    progress:     { x: 0, y: 8, w: 8, h: 4 },
+    overallTodos: { x: 8, y: 8, w: 4, h: 5 },
+    videoPlayer:  { x: 0, y: 12, w: 6, h: 8 }
   };
   for (const [key, def] of Object.entries(backfill)) {
     if (!s.gridLayout[key]) { s.gridLayout[key] = def; dirty = true; }

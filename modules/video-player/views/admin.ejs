@@ -1,0 +1,50 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+  <div class="alert alert-success">✅ Saved!</div>
+  <% } %>
+  <% if (error) { %>
+  <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <div class="admin-card" style="background: rgba(239,68,68,0.06); border: 1px solid rgba(239,68,68,0.2);">
+    <h2 class="card-title">🎬 Video Player</h2>
+    <p style="font-size:.88rem; line-height:1.6; opacity:.8; margin:0 0 .5rem">
+      The video player shows a YouTube video on the dashboard.
+      Enter a YouTube URL below to pre-load it, or click <strong>Set URL</strong>
+      directly on the dashboard at any time.
+    </p>
+  </div>
+
+  <div class="admin-card">
+    <h2 class="card-title">⚙️ Settings</h2>
+    <form action="<%= basePath %>/admin/video-player/settings" method="POST">
+
+      <div class="settings-grid">
+        <label class="checkbox-label">
+          <input type="checkbox" name="videoPlayerEnabled"
+                 <%= vs.enabled !== false ? 'checked' : '' %>>
+          Show Video Player on Dashboard
+        </label>
+      </div>
+
+      <div class="form-group" style="margin-top:1rem">
+        <label class="form-label">Default YouTube URL</label>
+        <input type="text" name="defaultUrl"
+               value="<%= vs.lastUrl || '' %>"
+               placeholder="https://www.youtube.com/watch?v=..."
+               class="form-control">
+        <p class="form-hint">Pre-loaded video when the dashboard opens. You can also change it live from the dashboard.</p>
+      </div>
+
+      <div class="form-actions" style="margin-top:1.25rem">
+        <button type="submit" class="btn btn-primary">💾 Save</button>
+      </div>
+    </form>
+  </div>
+
+</div>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

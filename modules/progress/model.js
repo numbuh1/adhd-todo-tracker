@@ -9,9 +9,10 @@ const taskSchema = new mongoose.Schema({
   status:      { type: String, enum: ['idle', 'in-progress'], default: 'idle' },
   color:       { type: String, default: '#7c3aed' },
   deadline:    { type: Date, default: null },
-  visible:     { type: Boolean, default: true }
+  visible:     { type: Boolean, default: true },
+  order:       { type: Number, default: 0 }
 }, { timestamps: true });
 
-taskSchema.index({ userId: 1, createdAt: -1 });
+taskSchema.index({ userId: 1, order: 1 });
 
 module.exports = mongoose.model('ProgressTask', taskSchema);

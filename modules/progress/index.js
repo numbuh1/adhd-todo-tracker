@@ -6,7 +6,7 @@ const bp = req => req.app.locals.basePath || '';
 
 // ── Dashboard data ─────────────────────────────────────────
 const getDashboardData = async (userId) => {
-  const tasks = await Task.find({ userId, visible: true }).sort({ createdAt: -1 }).lean();
+  const tasks = await Task.find({ userId, visible: true }).sort({ order: 1, createdAt: -1 }).lean();
   return { tasks };
 };
 
@@ -96,6 +96,19 @@ router.post('/api/update-progress', async (req, res) => {
     );
     if (!task) return res.json({ ok: false, error: 'Task not found' });
     res.json({ ok: true, progress: task.progress });
+  } catch (e) { res.json({ ok: false, error: e.message }); }
+});
+
+// Reorder tasks (drag-and-drop)
+router.post('/api/reorder', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.json({ ok: false, error: 'ids must be an array' });
+    const userId = req.session.userId;
+    await Promise.all(ids.map((id, idx) =>
+      Task.findOneAndUpdate({ _id: id, userId }, { order: idx })
+    ));
+    res.json({ ok: true });
   } catch (e) { res.json({ ok: false, error: e.message }); }
 });
 

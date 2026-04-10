@@ -23,12 +23,15 @@
 
     <!-- Goals list -->
     <% if (week.goals && week.goals.length > 0) { %>
-    <ul class="item-list">
+    <ul class="item-list sortable-list"
+        data-sortable-url="<%= basePath %>/admin/weekly-todos/api/reorder-goals"
+        data-sortable-extra='{"weekId":"<%= week._id %>"}'>
       <% week.goals.forEach(goal => { %>
-      <li class="item-row" id="goal-<%= goal._id %>">
+      <li class="item-row sortable-item" data-id="<%= goal._id %>" id="goal-<%= goal._id %>">
 
         <!-- View mode -->
         <div class="item-view">
+          <span class="sort-handle" style="cursor:grab;opacity:.4;font-size:.9rem;margin-right:4px">☰</span>
           <span class="item-check-icon"><%= goal.completed ? '✅' : '⬜' %></span>
           <span class="item-text<%= goal.completed ? ' item-done' : '' %>"><%= goal.text %></span>
           <div class="item-actions">
@@ -86,11 +89,14 @@
 
         <!-- Todos list for this day -->
         <% if (day.todos && day.todos.length > 0) { %>
-        <ul class="item-list-sm">
+        <ul class="item-list-sm sortable-list"
+            data-sortable-url="<%= basePath %>/admin/weekly-todos/api/reorder-todos"
+            data-sortable-extra='{"weekId":"<%= week._id %>","dayIndex":<%= day.dayIndex %>}'>
           <% day.todos.forEach(todo => { %>
-          <li class="item-row-sm" id="todo-<%= todo._id %>">
+          <li class="item-row-sm sortable-item" data-id="<%= todo._id %>" id="todo-<%= todo._id %>">
 
             <div class="item-view-sm">
+              <span class="sort-handle" style="cursor:grab;opacity:.4;font-size:.8rem;margin-right:3px">☰</span>
               <span class="item-text-sm<%= todo.completed ? ' item-done' : '' %>"><%= todo.text %></span>
               <div class="item-actions-sm">
                 <button class="btn btn-xs btn-secondary" onclick="toggleItemEdit('todo', '<%= todo._id %>')">✏️</button>

@@ -79,6 +79,9 @@ document.addEventListener('change', async (e) => {
     } else if (type === 'habit') {
       url  = BP + '/admin/habit-tracker/api/toggle';
       body = { habitId: label.dataset.habitId, date: label.dataset.date, completed };
+    } else if (type === 'overall') {
+      url  = BP + '/admin/overall-todos/api/toggle';
+      body = { docId: label.dataset.docId, itemId: label.dataset.itemId, completed };
     } else { return; }
 
     const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

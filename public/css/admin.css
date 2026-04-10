@@ -423,3 +423,53 @@ html, body {
   border: 1px solid var(--border);
 }
 .wallpaper-preview span { font-size: .8rem; color: var(--muted); }
+
+/* ── Drag-and-drop sortable ───────────────────────────────── */
+.sort-handle {
+  cursor: grab;
+  color: var(--muted);
+  font-size: .95rem;
+  padding: 2px 4px;
+  border-radius: 4px;
+  user-select: none;
+  flex-shrink: 0;
+  transition: color .15s;
+}
+.sort-handle:hover { color: var(--accent); }
+.sort-handle:active { cursor: grabbing; }
+
+/* Ghost (placeholder) styling */
+.sort-ghost, .sort-ghost * { opacity: .35 !important; }
+.sort-ghost td, .sort-ghost th { background: rgba(124,58,237,0.08) !important; }
+
+/* Sortable list (ul-based) */
+.sortable-list { list-style: none; padding: 0; margin: 0; }
+.sortable-item { position: relative; }
+
+/* Row inside a sortable-list item */
+.sort-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .55rem .6rem;
+  border-radius: 6px;
+  transition: background .12s;
+}
+.sort-row:hover { background: rgba(124,58,237,0.05); }
+
+/* Edit row inside a sortable item */
+.sort-edit-row {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .45rem .6rem;
+  background: rgba(124,58,237,0.06);
+  border-radius: 6px;
+  margin-top: 2px;
+}
+
+/* Tables with multiple <tbody> sortable items */
+.sortable-table tbody.sortable-item:hover > tr:first-child {
+  background: rgba(124,58,237,0.04);
+}
+.sortable-table .sort-ghost { opacity: .4 !important; }

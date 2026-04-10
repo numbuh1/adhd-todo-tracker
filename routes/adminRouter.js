@@ -3,15 +3,34 @@ const path          = require('path');
 const multer        = require('multer');
 const router        = express.Router();
 
-const Settings      = require('../models/Settings');
-const LayoutProfile = require('../models/LayoutProfile');
-const calendarMod   = require('../modules/calendar/index');
-const weeklyMod     = require('../modules/weekly-todos/index');
-const habitMod      = require('../modules/habit-tracker/index');
-const musicMod      = require('../modules/music-player/index');
-const progressMod   = require('../modules/progress/index');
+const Settings        = require('../models/Settings');
+const LayoutProfile   = require('../models/LayoutProfile');
+const liveUpdates     = require('../lib/liveUpdates');
+const calendarMod     = require('../modules/calendar/index');
+const weeklyMod       = require('../modules/weekly-todos/index');
+const habitMod        = require('../modules/habit-tracker/index');
+const musicMod        = require('../modules/music-player/index');
+const progressMod     = require('../modules/progress/index');
+const overallTodosMod = require('../modules/overall-todos/index');
+const videoPlayerMod  = require('../modules/video-player/index');
 
 const bp = req => req.app.locals.basePath || '';
+
+// ── SSE notify on all mutating POST requests ───────────────
+router.use((req, res, next) => {
+  if (req.method !== 'POST') return next();
+  const origJson     = res.json.bind(res);
+  const origRedirect = res.redirect.bind(res);
+  res.json = function (data) {
+    if (data && data.ok !== false) liveUpdates.notify(req.session.userId);
+    return origJson(data);
+  };
+  res.redirect = function (...args) {
+    liveUpdates.notify(req.session.userId);
+    return origRedirect(...args);
+  };
+  next();
+});
 
 // ── Multer for wallpaper uploads ───────────────────────────
 const storage = multer.diskStorage({
@@ -56,6 +75,7 @@ router.post('/settings', upload.single('wallpaper'), async (req, res) => {
     settings.theme.cardColor        = b.cardColor        || settings.theme.cardColor;
     settings.theme.textColor        = b.textColor        || settings.theme.textColor;
     settings.theme.wallpaperOpacity = parseFloat(b.wallpaperOpacity) || settings.theme.wallpaperOpacity;
+    if (b.moduleOpacity !== undefined) settings.theme.moduleOpacity = parseFloat(b.moduleOpacity);
 
     if (req.file)                  settings.theme.wallpaper = '/uploads/' + req.file.filename;
     if (b.removeWallpaper === '1') settings.theme.wallpaper = null;
@@ -72,7 +92,14 @@ router.post('/settings', upload.single('wallpaper'), async (req, res) => {
     if (!settings.modules.progress) settings.modules.progress = {};
     settings.modules.progress.enabled = b.progressEnabled === 'on';
 
+    if (!settings.modules.overallTodos) settings.modules.overallTodos = {};
+    settings.modules.overallTodos.enabled = b.overallTodosEnabled === 'on';
+
+    if (!settings.modules.videoPlayer) settings.modules.videoPlayer = {};
+    settings.modules.videoPlayer.enabled = b.videoPlayerEnabled === 'on';
+
     settings.markModified('modules');
+    settings.markModified('theme');
     await settings.save();
     res.redirect(bp(req) + '/admin/settings?saved=1');
   } catch (err) {
@@ -164,10 +191,12 @@ router.post('/layout-profiles/:id/delete', async (req, res) => {
 });
 
 // ── Module admin routers ───────────────────────────────────
-router.use('/calendar',      calendarMod.adminRouter);
-router.use('/weekly-todos',  weeklyMod.adminRouter);
-router.use('/habit-tracker', habitMod.adminRouter);
-router.use('/music-player',  musicMod.adminRouter);
-router.use('/progress',      progressMod.adminRouter);
+router.use('/calendar',       calendarMod.adminRouter);
+router.use('/weekly-todos',   weeklyMod.adminRouter);
+router.use('/habit-tracker',  habitMod.adminRouter);
+router.use('/music-player',   musicMod.adminRouter);
+router.use('/progress',       progressMod.adminRouter);
+router.use('/overall-todos',  overallTodosMod.adminRouter);
+router.use('/video-player',   videoPlayerMod.adminRouter);
 
 module.exports = router;

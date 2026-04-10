@@ -71,9 +71,11 @@
     <% if (tasks.length === 0) { %>
       <p class="empty-msg">No tasks yet. Add one above!</p>
     <% } else { %>
-    <table class="data-table">
+    <p class="form-hint" style="margin-bottom:.5rem">Drag ☰ to reorder tasks on the dashboard.</p>
+    <table class="data-table sortable-table" id="progressSortTable">
       <thead>
         <tr>
+          <th style="width:30px"></th>
           <th>Icon</th>
           <th>Name</th>
           <th>Description</th>
@@ -85,12 +87,15 @@
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <% tasks.forEach(t => {
-          const tId = t._id.toString();
-        %>
+
+      <% tasks.forEach(t => {
+        const tId = t._id.toString();
+      %>
+      <tbody class="sortable-item" data-id="<%= tId %>">
+
         <!-- View row -->
         <tr id="tview-<%= tId %>">
+          <td><span class="sort-handle">☰</span></td>
           <td style="font-size:1.3rem"><%= t.icon %></td>
           <td><strong><%= t.name %></strong></td>
           <td style="opacity:.7"><%= t.description || '—' %></td>
@@ -123,6 +128,7 @@
 
         <!-- Edit row -->
         <tr id="tedit-<%= tId %>" style="display:none; background:#0d0d22;">
+          <td></td>
           <td colspan="9">
             <form action="<%= basePath %>/admin/progress/tasks/<%= tId %>/edit" method="POST"
                   style="padding:.5rem 0">
@@ -184,8 +190,10 @@
             </form>
           </td>
         </tr>
-        <% }); %>
+
       </tbody>
+      <% }); %>
+
     </table>
     <% } %>
   </div>
@@ -206,6 +214,28 @@ function toggleTaskEdit(id, show) {
   document.getElementById('tview-' + id).style.display = show ? 'none' : '';
   document.getElementById('tedit-' + id).style.display = show ? ''     : 'none';
 }
+
+// Sortable for progress table
+document.addEventListener('DOMContentLoaded', () => {
+  const table = document.getElementById('progressSortTable');
+  if (!table || typeof Sortable === 'undefined') return;
+  Sortable.create(table, {
+    draggable: 'tbody.sortable-item',
+    handle: '.sort-handle',
+    animation: 150,
+    ghostClass: 'sort-ghost',
+    onEnd: async () => {
+      const ids = [...table.querySelectorAll('tbody.sortable-item')].map(el => el.dataset.id);
+      try {
+        await fetch('<%= basePath %>/admin/progress/api/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+      } catch (e) { console.error('Progress reorder failed:', e); }
+    }
+  });
+});
 </script>
 
 <%- include(root + '/views/partials/admin-layout-bottom') %>

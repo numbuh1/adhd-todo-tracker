@@ -72,22 +72,26 @@
     <% if (habits.length === 0) { %>
       <p class="empty-msg">No habits yet. Add one above!</p>
     <% } else { %>
-    <table class="data-table">
+    <p class="form-hint" style="margin-bottom:.5rem">Drag ☰ to reorder habits on the dashboard.</p>
+    <table class="data-table sortable-table" id="habitSortTable">
       <thead>
         <tr>
+          <th style="width:30px"></th>
           <th>Icon / Photo</th>
           <th>Name</th>
           <th>Color</th>
           <th>Actions</th>
         </tr>
       </thead>
-      <tbody>
-        <% habits.forEach(h => {
-          const hId = h._id.toString();
-        %>
+
+      <% habits.forEach(h => {
+        const hId = h._id.toString();
+      %>
+      <tbody class="sortable-item" data-id="<%= hId %>">
 
         <!-- View row -->
         <tr id="hview-<%= hId %>">
+          <td><span class="sort-handle">☰</span></td>
           <td>
             <% if (h.photo) { %>
               <img src="<%= basePath %><%= h.photo %>" alt="<%= h.name %>" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">
@@ -107,7 +111,8 @@
         </tr>
 
         <!-- Edit row -->
-        <tr id="hedit-<%= hId %>" style="display:none; background:#faf5ff;">
+        <tr id="hedit-<%= hId %>" style="display:none; background:#0d0d22;">
+          <td></td>
           <td colspan="4">
             <form action="<%= basePath %>/admin/habit-tracker/habits/<%= hId %>/edit" method="POST"
                   enctype="multipart/form-data">
@@ -148,8 +153,9 @@
           </td>
         </tr>
 
-        <% }); %>
       </tbody>
+      <% }); %>
+
     </table>
     <% } %>
   </div>
@@ -161,6 +167,28 @@ function toggleHabitEdit(id, show) {
   document.getElementById('hview-' + id).style.display = show ? 'none' : '';
   document.getElementById('hedit-' + id).style.display = show ? ''     : 'none';
 }
+
+// Sortable for habits table
+document.addEventListener('DOMContentLoaded', () => {
+  const table = document.getElementById('habitSortTable');
+  if (!table || typeof Sortable === 'undefined') return;
+  Sortable.create(table, {
+    draggable: 'tbody.sortable-item',
+    handle: '.sort-handle',
+    animation: 150,
+    ghostClass: 'sort-ghost',
+    onEnd: async () => {
+      const ids = [...table.querySelectorAll('tbody.sortable-item')].map(el => el.dataset.id);
+      try {
+        await fetch('<%= basePath %>/admin/habit-tracker/api/reorder', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids })
+        });
+      } catch (e) { console.error('Habit reorder failed:', e); }
+    }
+  });
+});
 </script>
 
 <%- include(root + '/views/partials/admin-layout-bottom') %>

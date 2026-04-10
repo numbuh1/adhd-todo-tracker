@@ -1,6 +1,38 @@
   </main>
 </div>
 
+<!-- ── SortableJS ──────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script>
+/* ── Auto-init sortable lists ─────────────────────────────── *
+ * Any element with class "sortable-list" and a
+ * data-sortable-url attribute will become drag-sortable.
+ * After each drag, the new order of item IDs is POSTed as
+ * JSON { ids: [...] } to the given URL.
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.sortable-list[data-sortable-url]').forEach(list => {
+    Sortable.create(list, {
+      handle:    '.sort-handle',
+      animation: 150,
+      ghostClass: 'sort-ghost',
+      onEnd: async () => {
+        const ids = [...list.querySelectorAll('[data-id]')].map(el => el.dataset.id);
+        const url = list.dataset.sortableUrl;
+        const extra = list.dataset.sortableExtra ? JSON.parse(list.dataset.sortableExtra) : {};
+        try {
+          await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ids, ...extra })
+          });
+        } catch (e) { console.error('Reorder failed:', e); }
+      }
+    });
+  });
+});
+</script>
+
 <!-- ── Emoji Mart ──────────────────────────────────────────── -->
 <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
 <style>

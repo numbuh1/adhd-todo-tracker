@@ -139,6 +139,38 @@ router.post('/:weekStart/days/:dayIndex/todos/:todoId/delete', async (req, res) 
   res.redirect(bp(req) + `/admin/weekly-todos/${req.params.weekStart}/edit`);
 });
 
+// Reorder goals
+router.post('/api/reorder-goals', async (req, res) => {
+  try {
+    const { weekId, ids } = req.body;
+    const week = await Week.findOne({ _id: weekId, userId: req.session.userId });
+    if (!week) return res.json({ ok: false, error: 'Week not found' });
+    ids.forEach((id, idx) => {
+      const goal = week.goals.id(id);
+      if (goal) goal.order = idx;
+    });
+    await week.save();
+    res.json({ ok: true });
+  } catch (e) { res.json({ ok: false, error: e.message }); }
+});
+
+// Reorder todos within a day
+router.post('/api/reorder-todos', async (req, res) => {
+  try {
+    const { weekId, dayIndex, ids } = req.body;
+    const week = await Week.findOne({ _id: weekId, userId: req.session.userId });
+    if (!week) return res.json({ ok: false, error: 'Week not found' });
+    const day = week.days.find(d => d.dayIndex === parseInt(dayIndex));
+    if (!day) return res.json({ ok: false, error: 'Day not found' });
+    ids.forEach((id, idx) => {
+      const todo = day.todos.id(id);
+      if (todo) todo.order = idx;
+    });
+    await week.save();
+    res.json({ ok: true });
+  } catch (e) { res.json({ ok: false, error: e.message }); }
+});
+
 // Toggle APIs (dashboard checkboxes)
 router.post('/api/toggle-goal', async (req, res) => {
   try {

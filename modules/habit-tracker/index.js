@@ -115,6 +115,18 @@ router.post('/habits/:id/delete', async (req, res) => {
   res.redirect(bp(req) + '/admin/habit-tracker');
 });
 
+router.post('/api/reorder', async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.json({ ok: false, error: 'ids must be an array' });
+    const userId = req.session.userId;
+    await Promise.all(ids.map((id, idx) =>
+      Habit.findOneAndUpdate({ _id: id, userId }, { order: idx })
+    ));
+    res.json({ ok: true });
+  } catch (e) { res.json({ ok: false, error: e.message }); }
+});
+
 router.post('/api/toggle', async (req, res) => {
   try {
     const { habitId, date, completed } = req.body;
