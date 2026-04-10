@@ -16,9 +16,18 @@ const videoPlayerMod  = require('../modules/video-player/index');
 
 const bp = req => req.app.locals.basePath || '';
 
-// ── SSE notify on all mutating POST requests ───────────────
+// ── SSE notify on mutating POST requests ──────────────────
+// Excluded: grid-layout saves, layout-profile ops, video save-url
+// (these don't change content that the dashboard displays)
+const SSE_SKIP = [
+  '/settings/grid-layout',
+  '/layout-profiles',
+  '/video-player/api/save-url'
+];
 router.use((req, res, next) => {
   if (req.method !== 'POST') return next();
+  const skip = SSE_SKIP.some(p => req.path === p || req.path.startsWith('/layout-profiles/'));
+  if (skip) return next();
   const origJson     = res.json.bind(res);
   const origRedirect = res.redirect.bind(res);
   res.json = function (data) {
