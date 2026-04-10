@@ -1,0 +1,345 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-page">
+  <div class="page-header">
+    <h1 class="page-title">🔁📊 Recurring Progress</h1>
+    <p class="page-subtitle">Progress bars that reset every week, month, or year</p>
+  </div>
+
+  <% if (saved)  { %><div class="alert alert-success">✅ Saved!</div><% } %>
+  <% if (error)  { %><div class="alert alert-error">⚠️ <%= error %></div><% } %>
+
+  <!-- ── Add Form ─────────────────────────────────────────── -->
+  <div class="admin-card" style="margin-bottom:1.5rem">
+    <h2 class="card-title">Add New Rule</h2>
+    <form method="POST" action="<%= basePath %>/admin/recurring-progress/rules" class="rp-form">
+
+      <!-- Row 1: icon, name, description, color -->
+      <div class="form-row">
+        <div class="form-group" style="flex:0 0 70px">
+          <label class="form-label">Icon</label>
+          <input type="text" name="icon" class="form-control text-center" value="📊" maxlength="4">
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Name <span class="req">*</span></label>
+          <input type="text" name="name" class="form-control" placeholder="e.g. Weekly Exercise Goal" required>
+        </div>
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Description</label>
+          <input type="text" name="description" class="form-control" placeholder="Optional note…">
+        </div>
+        <div class="form-group" style="flex:0 0 80px">
+          <label class="form-label">Color</label>
+          <input type="color" name="color" class="form-control" value="#7c3aed" style="height:38px;padding:2px 4px">
+        </div>
+      </div>
+
+      <!-- Row 2: type selector -->
+      <div class="form-group">
+        <label class="form-label">Recurrence Type</label>
+        <select name="type" class="form-control rp-type-select" onchange="updateRpFields(this.closest('form'), this.value)" style="max-width:200px">
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+
+      <!-- Window fields (shown/hidden based on type) -->
+      <div class="rp-fields-weekly" style="display:flex;gap:12px;flex-wrap:wrap">
+        <div class="form-group">
+          <label class="form-label">Start Day</label>
+          <select name="startDow" class="form-control">
+            <option value="1" selected>Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+            <option value="0">Sunday</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline Day</label>
+          <select name="endDow" class="form-control">
+            <option value="1">Monday</option>
+            <option value="2">Tuesday</option>
+            <option value="3">Wednesday</option>
+            <option value="4">Thursday</option>
+            <option value="5">Friday</option>
+            <option value="6">Saturday</option>
+            <option value="0" selected>Sunday</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="rp-fields-monthly" style="display:none;gap:12px;flex-wrap:wrap">
+        <div class="form-group">
+          <label class="form-label">Start Day of Month</label>
+          <input type="number" name="startDom" class="form-control" value="1" min="1" max="31" style="width:100px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Deadline Day of Month</label>
+          <input type="number" name="endDom" class="form-control" value="28" min="1" max="31" style="width:100px">
+        </div>
+      </div>
+
+      <div class="rp-fields-yearly" style="display:none;gap:12px;flex-wrap:wrap">
+        <div class="form-group">
+          <label class="form-label">Start Month</label>
+          <select name="startMonth" class="form-control">
+            <% ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i) => { %>
+              <option value="<%= i+1 %>" <%= i===0 ? 'selected' : '' %>><%= m %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Start Day</label>
+          <input type="number" name="startDom" class="form-control" value="1" min="1" max="31" style="width:90px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Month</label>
+          <select name="endMonth" class="form-control">
+            <% ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i) => { %>
+              <option value="<%= i+1 %>" <%= i===11 ? 'selected' : '' %>><%= m %></option>
+            <% }) %>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">End Day</label>
+          <input type="number" name="endDom" class="form-control" value="31" min="1" max="31" style="width:90px">
+        </div>
+      </div>
+
+      <!-- Global date bounds (optional) -->
+      <div class="form-row" style="margin-top:4px">
+        <div class="form-group">
+          <label class="form-label">Active From (optional)</label>
+          <input type="date" name="startDate" class="form-control" style="max-width:180px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Active Until (optional)</label>
+          <input type="date" name="endDate" class="form-control" style="max-width:180px">
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary">➕ Add Rule</button>
+    </form>
+  </div>
+
+  <!-- ── Rules List ─────────────────────────────────────────── -->
+  <% if (rules.length === 0) { %>
+    <p style="opacity:.5;text-align:center;padding:2rem">No recurring progress rules yet.</p>
+  <% } else { %>
+  <div class="rp-rules-list">
+    <% rules.forEach(rule => { %>
+    <div class="admin-card rp-rule-card<%= rule.active ? '' : ' rp-inactive' %>" data-id="<%= rule._id %>">
+
+      <!-- Top row: icon + name + badge + controls -->
+      <div class="rp-rule-top">
+        <span class="rp-rule-icon"><%= rule.icon %></span>
+        <div class="rp-rule-info">
+          <span class="rp-rule-name"><%= rule.name %></span>
+          <% if (rule.description) { %><span class="rp-rule-desc"><%= rule.description %></span><% } %>
+          <span class="rp-schedule-badge"><%= scheduleLabel(rule) %></span>
+        </div>
+        <div class="rp-rule-actions">
+          <button class="btn btn-sm rp-toggle-active-btn"
+                  data-id="<%= rule._id %>"
+                  data-active="<%= rule.active %>"
+                  title="<%= rule.active ? 'Hide rule' : 'Show rule' %>">
+            <%= rule.active ? '👁 Active' : '🚫 Hidden' %>
+          </button>
+          <button class="btn btn-sm btn-outline rp-edit-btn" data-id="<%= rule._id %>">✏️ Edit</button>
+          <form method="POST" action="<%= basePath %>/admin/recurring-progress/rules/<%= rule._id %>/delete"
+                style="display:inline" onsubmit="return confirm('Delete this rule?')">
+            <button type="submit" class="btn btn-sm btn-danger">🗑</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Inline edit form (hidden) -->
+      <form class="rp-edit-form" data-id="<%= rule._id %>"
+            method="POST"
+            action="<%= basePath %>/admin/recurring-progress/rules/<%= rule._id %>/edit"
+            style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07)">
+
+        <div class="form-row">
+          <div class="form-group" style="flex:0 0 70px">
+            <label class="form-label">Icon</label>
+            <input type="text" name="icon" class="form-control text-center" value="<%= rule.icon %>" maxlength="4">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Name</label>
+            <input type="text" name="name" class="form-control" value="<%= rule.name %>" required>
+          </div>
+          <div class="form-group" style="flex:1">
+            <label class="form-label">Description</label>
+            <input type="text" name="description" class="form-control" value="<%= rule.description %>">
+          </div>
+          <div class="form-group" style="flex:0 0 80px">
+            <label class="form-label">Color</label>
+            <input type="color" name="color" class="form-control" value="<%= rule.color %>" style="height:38px;padding:2px 4px">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Recurrence Type</label>
+          <select name="type" class="form-control rp-type-select"
+                  onchange="updateRpFields(this.closest('form'), this.value)"
+                  style="max-width:200px">
+            <option value="weekly"  <%= rule.type==='weekly'  ? 'selected' : '' %>>Weekly</option>
+            <option value="monthly" <%= rule.type==='monthly' ? 'selected' : '' %>>Monthly</option>
+            <option value="yearly"  <%= rule.type==='yearly'  ? 'selected' : '' %>>Yearly</option>
+          </select>
+        </div>
+
+        <div class="rp-fields-weekly" style="display:<%= rule.type==='weekly' ? 'flex' : 'none' %>;gap:12px;flex-wrap:wrap">
+          <div class="form-group">
+            <label class="form-label">Start Day</label>
+            <select name="startDow" class="form-control">
+              <% [['Mon',1],['Tue',2],['Wed',3],['Thu',4],['Fri',5],['Sat',6],['Sun',0]].forEach(([l,v]) => { %>
+                <option value="<%= v %>" <%= rule.startDow===v ? 'selected' : '' %>><%= l %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deadline Day</label>
+            <select name="endDow" class="form-control">
+              <% [['Mon',1],['Tue',2],['Wed',3],['Thu',4],['Fri',5],['Sat',6],['Sun',0]].forEach(([l,v]) => { %>
+                <option value="<%= v %>" <%= rule.endDow===v ? 'selected' : '' %>><%= l %></option>
+              <% }) %>
+            </select>
+          </div>
+        </div>
+
+        <div class="rp-fields-monthly" style="display:<%= rule.type==='monthly' ? 'flex' : 'none' %>;gap:12px;flex-wrap:wrap">
+          <div class="form-group">
+            <label class="form-label">Start Day of Month</label>
+            <input type="number" name="startDom" class="form-control" value="<%= rule.startDom %>" min="1" max="31" style="width:100px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Deadline Day of Month</label>
+            <input type="number" name="endDom" class="form-control" value="<%= rule.endDom %>" min="1" max="31" style="width:100px">
+          </div>
+        </div>
+
+        <div class="rp-fields-yearly" style="display:<%= rule.type==='yearly' ? 'flex' : 'none' %>;gap:12px;flex-wrap:wrap">
+          <div class="form-group">
+            <label class="form-label">Start Month</label>
+            <select name="startMonth" class="form-control">
+              <% ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i) => { %>
+                <option value="<%= i+1 %>" <%= rule.startMonth===(i+1) ? 'selected' : '' %>><%= m %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Start Day</label>
+            <input type="number" name="startDom" class="form-control" value="<%= rule.startDom %>" min="1" max="31" style="width:90px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Month</label>
+            <select name="endMonth" class="form-control">
+              <% ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'].forEach((m,i) => { %>
+                <option value="<%= i+1 %>" <%= rule.endMonth===(i+1) ? 'selected' : '' %>><%= m %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">End Day</label>
+            <input type="number" name="endDom" class="form-control" value="<%= rule.endDom %>" min="1" max="31" style="width:90px">
+          </div>
+        </div>
+
+        <div class="form-row" style="margin-top:4px">
+          <div class="form-group">
+            <label class="form-label">Active From (optional)</label>
+            <input type="date" name="startDate" class="form-control"
+                   value="<%= rule.startDate ? new Date(rule.startDate).toISOString().split('T')[0] : '' %>"
+                   style="max-width:180px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Active Until (optional)</label>
+            <input type="date" name="endDate" class="form-control"
+                   value="<%= rule.endDate ? new Date(rule.endDate).toISOString().split('T')[0] : '' %>"
+                   style="max-width:180px">
+          </div>
+        </div>
+
+        <div style="display:flex;gap:8px">
+          <button type="submit" class="btn btn-primary">💾 Save</button>
+          <button type="button" class="btn btn-outline rp-cancel-btn" data-id="<%= rule._id %>">Cancel</button>
+        </div>
+      </form>
+
+    </div>
+    <% }) %>
+  </div>
+  <% } %>
+</div>
+
+<style>
+.rp-form .form-row { display:flex; gap:12px; flex-wrap:wrap; }
+.rp-rules-list { display:flex; flex-direction:column; gap:12px; }
+.rp-rule-card { padding:14px 16px; }
+.rp-rule-card.rp-inactive { opacity:.55; }
+.rp-rule-top { display:flex; align-items:flex-start; gap:10px; }
+.rp-rule-icon { font-size:1.6rem; flex-shrink:0; margin-top:1px; }
+.rp-rule-info { flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
+.rp-rule-name { font-weight:600; font-size:.95rem; }
+.rp-rule-desc { font-size:.78rem; opacity:.5; }
+.rp-schedule-badge {
+  display:inline-block; background:rgba(255,255,255,.07);
+  border-radius:20px; padding:2px 10px; font-size:.72rem;
+  opacity:.75; margin-top:2px; width:fit-content;
+}
+.rp-rule-actions { display:flex; gap:6px; flex-shrink:0; flex-wrap:wrap; }
+.btn-sm { padding:4px 10px; font-size:.78rem; }
+.btn-danger { background:rgba(248,113,113,.15); border:1px solid rgba(248,113,113,.3); color:#f87171; }
+.btn-danger:hover { background:rgba(248,113,113,.3); }
+</style>
+
+<script>
+function updateRpFields(form, type) {
+  form.querySelector('.rp-fields-weekly').style.display  = type === 'weekly'  ? 'flex' : 'none';
+  form.querySelector('.rp-fields-monthly').style.display = type === 'monthly' ? 'flex' : 'none';
+  form.querySelector('.rp-fields-yearly').style.display  = type === 'yearly'  ? 'flex' : 'none';
+}
+
+// Toggle active
+document.querySelectorAll('.rp-toggle-active-btn').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const id  = btn.dataset.id;
+    const res  = await fetch(`<%= basePath %>/admin/recurring-progress/rules/${id}/toggle-active`, { method:'POST' });
+    const data = await res.json();
+    if (!data.ok) return alert(data.error);
+    const card = btn.closest('.rp-rule-card');
+    if (data.active) {
+      btn.textContent = '👁 Active';
+      card.classList.remove('rp-inactive');
+      btn.dataset.active = 'true';
+    } else {
+      btn.textContent = '🚫 Hidden';
+      card.classList.add('rp-inactive');
+      btn.dataset.active = 'false';
+    }
+  });
+});
+
+// Edit / Cancel toggles
+document.querySelectorAll('.rp-edit-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id   = btn.dataset.id;
+    const form = document.querySelector(`.rp-edit-form[data-id="${id}"]`);
+    if (form) form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  });
+});
+document.querySelectorAll('.rp-cancel-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const id   = btn.dataset.id;
+    const form = document.querySelector(`.rp-edit-form[data-id="${id}"]`);
+    if (form) form.style.display = 'none';
+  });
+});
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

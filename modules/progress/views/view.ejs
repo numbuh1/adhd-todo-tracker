@@ -13,17 +13,23 @@
       const tId     = task._id.toString();
       const pct     = task.progress || 0;
       const onFire  = task.status === 'in-progress';
-      const deadlineStr = task.deadline
-        ? new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
-        : null;
+      const deadlineStr = task.deadlineLabel ||
+        (task.deadline ? new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : null);
     %>
-    <div class="prog-card<%= onFire ? ' prog-on-fire' : '' %>" data-task-id="<%= tId %>">
+    <div class="prog-card<%= onFire ? ' prog-on-fire' : '' %>"
+         data-task-id="<%= tId %>"
+         data-recurring="<%= task.isRecurring ? 'true' : 'false' %>"
+         data-rule-id="<%= task.isRecurring ? tId : '' %>"
+         data-period-key="<%= task.isRecurring ? (task.periodKey || '') : '' %>">
 
       <!-- Header: icon + name + deadline + status btn -->
       <div class="prog-card-top">
         <span class="prog-icon"><%= task.icon %></span>
         <div class="prog-name-wrap">
-          <span class="prog-name"><%= task.name %></span>
+          <span class="prog-name">
+            <% if (task.isRecurring) { %><span class="prog-recurring-badge" title="Recurring">🔁</span><% } %>
+            <%= task.name %>
+          </span>
           <% if (task.description) { %>
             <span class="prog-desc"><%= task.description %></span>
           <% } %>
@@ -93,7 +99,8 @@
 }
 .prog-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; margin-top: 1px; }
 .prog-name-wrap { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.prog-name { font-size: .9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prog-name { font-size: .9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; align-items: center; gap: 4px; }
+.prog-recurring-badge { font-size: .8rem; flex-shrink: 0; }
 .prog-desc { font-size: .75rem; opacity: .5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prog-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
 .prog-deadline { font-size: .72rem; opacity: .5; white-space: nowrap; }
@@ -232,13 +239,22 @@
     if (card) card.querySelector('.prog-pct').textContent = pct + '%';
   }
 
-  async function saveProgress(taskId, pct) {
+  async function saveProgress(card, pct) {
+    const isRecurring = card.dataset.recurring === 'true';
     try {
-      await fetch(BP + '/admin/progress/api/update-progress', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId, progress: pct })
-      });
+      if (isRecurring) {
+        await fetch(BP + '/admin/recurring-progress/api/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ruleId: card.dataset.ruleId, periodKey: card.dataset.periodKey, progress: pct })
+        });
+      } else {
+        await fetch(BP + '/admin/progress/api/update-progress', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId: card.dataset.taskId, progress: pct })
+        });
+      }
     } catch(e) { console.warn('progress save failed', e); }
   }
 
@@ -256,11 +272,12 @@
     });
     track.addEventListener('pointerup', e => {
       if (activeTrack !== track) return;
-      const pct    = pctFromEvent(track, e);
+      const pct  = pctFromEvent(track, e);
       applyPct(track, pct);
       track.classList.remove('dragging');
       activeTrack = null;
-      saveProgress(track.dataset.taskId, pct);
+      const card = track.closest('.prog-card');
+      saveProgress(card, pct);
     });
     track.addEventListener('pointercancel', () => {
       if (activeTrack === track) {
@@ -274,11 +291,21 @@
   document.querySelectorAll('.prog-status-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
       const taskId = btn.dataset.taskId;
+      const card   = btn.closest('.prog-card');
+      const isRecurring = card && card.dataset.recurring === 'true';
       try {
-        const res  = await fetch(BP + '/admin/progress/api/toggle-status', {
+        let url, body;
+        if (isRecurring) {
+          url  = BP + '/admin/recurring-progress/api/toggle-status';
+          body = { ruleId: card.dataset.ruleId, periodKey: card.dataset.periodKey };
+        } else {
+          url  = BP + '/admin/progress/api/toggle-status';
+          body = { taskId };
+        }
+        const res  = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId })
+          body: JSON.stringify(body)
         });
         const data = await res.json();
         if (!data.ok) return;

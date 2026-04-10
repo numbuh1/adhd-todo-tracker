@@ -11,9 +11,10 @@ const weeklyMod       = require('../modules/weekly-todos/index');
 const habitMod        = require('../modules/habit-tracker/index');
 const musicMod        = require('../modules/music-player/index');
 const progressMod     = require('../modules/progress/index');
-const overallTodosMod   = require('../modules/overall-todos/index');
-const videoPlayerMod    = require('../modules/video-player/index');
-const recurringTodosMod = require('../modules/recurring-todos/index');
+const overallTodosMod       = require('../modules/overall-todos/index');
+const videoPlayerMod        = require('../modules/video-player/index');
+const recurringTodosMod     = require('../modules/recurring-todos/index');
+const recurringProgressMod  = require('../modules/recurring-progress/index');
 
 const bp = req => req.app.locals.basePath || '';
 
@@ -29,9 +30,11 @@ function getSSEModules(path) {
   if (path === '/weekly-todos/api/toggle-todo')     return null;
   if (path === '/habit-tracker/api/toggle')         return null;
   if (path === '/overall-todos/api/toggle')         return null;
-  if (path === '/recurring-todos/api/toggle')       return null;
-  if (path === '/progress/api/update-progress')     return null;
-  if (path === '/progress/api/toggle-status')       return null;
+  if (path === '/recurring-todos/api/toggle')              return null;
+  if (path === '/progress/api/update-progress')            return null;
+  if (path === '/progress/api/toggle-status')              return null;
+  if (path === '/recurring-progress/api/update-progress')  return null;
+  if (path === '/recurring-progress/api/toggle-status')    return null;
 
   // Settings: enable/disable modules — full reload needed
   if (path === '/settings')                         return 'all';
@@ -44,6 +47,7 @@ function getSSEModules(path) {
   if (path.startsWith('/progress'))                 return 'progress';
   if (path.startsWith('/overall-todos'))            return 'overallTodos';
   if (path.startsWith('/recurring-todos'))          return 'recurringTodos';
+  if (path.startsWith('/recurring-progress'))       return 'progress';
 
   return 'all'; // fallback
 }
@@ -73,10 +77,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({
   storage,
-  limits: { fileSize: 10 * 1024 * 1024 },
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100 MB for videos
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) cb(null, true);
-    else cb(new Error('Only image files allowed'));
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) cb(null, true);
+    else cb(new Error('Only image or video files allowed'));
   }
 });
 
@@ -235,6 +239,7 @@ router.use('/music-player',   musicMod.adminRouter);
 router.use('/progress',       progressMod.adminRouter);
 router.use('/overall-todos',    overallTodosMod.adminRouter);
 router.use('/video-player',     videoPlayerMod.adminRouter);
-router.use('/recurring-todos',  recurringTodosMod.adminRouter);
+router.use('/recurring-todos',     recurringTodosMod.adminRouter);
+router.use('/recurring-progress',  recurringProgressMod.adminRouter);
 
 module.exports = router;

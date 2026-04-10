@@ -464,3 +464,11 @@ html, body {
   align-items: baseline;
   gap: 0;
 }
+
+/* ── Video background ────────────────────────────────────── */
+.bg-video {
+  position: fixed; inset: 0; z-index: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}

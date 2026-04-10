@@ -1,12 +1,22 @@
-const express = require('express');
-const path    = require('path');
-const Task    = require('./model');
+const express            = require('express');
+const path               = require('path');
+const Task               = require('./model');
+const recurringProgressMod = require('../recurring-progress/index');
 
 const bp = req => req.app.locals.basePath || '';
 
 // ── Dashboard data ─────────────────────────────────────────
 const getDashboardData = async (userId) => {
-  const tasks = await Task.find({ userId, visible: true }).sort({ order: 1, createdAt: -1 }).lean();
+  const [regularTasks, recurringData] = await Promise.all([
+    Task.find({ userId, visible: true }).sort({ order: 1, createdAt: -1 }).lean(),
+    recurringProgressMod.getDashboardData(userId)
+  ]);
+
+  // Tag regular tasks
+  const tasks = [
+    ...regularTasks.map(t => ({ ...t, isRecurring: false })),
+    ...recurringData.tasks
+  ];
   return { tasks };
 };
 
