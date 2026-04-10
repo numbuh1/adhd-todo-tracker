@@ -106,6 +106,19 @@
   const cancelBtn  = document.getElementById('vpUrlCancel');
   const body       = document.getElementById('vpBody');
 
+  // Restore video after SSE-triggered reload
+  const savedSrc = sessionStorage.getItem('_vp_src');
+  if (savedSrc) {
+    sessionStorage.removeItem('_vp_src');
+    let wrap = body.querySelector('.vp-frame-wrap');
+    if (!wrap) {
+      body.innerHTML = '<div class="vp-frame-wrap"><iframe id="vpIframe" class="vp-iframe" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>';
+      wrap = body.querySelector('.vp-frame-wrap');
+    }
+    wrap.querySelector('iframe').src = savedSrc;
+    changeBtn.textContent = '🔗 Change';
+  }
+
   function extractId(url) {
     if (!url) return null;
     const patterns = [

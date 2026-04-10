@@ -220,7 +220,11 @@
       es.addEventListener('update', () => {
         // Debounce: wait 300 ms in case multiple events fire together
         clearTimeout(reloadTimer);
-        reloadTimer = setTimeout(() => window.location.reload(), 300);
+        reloadTimer = setTimeout(() => {
+          const vp = document.getElementById('vpIframe');
+          if (vp && vp.src) sessionStorage.setItem('_vp_src', vp.src);
+          window.location.reload();
+        }, 300);
       });
       es.onerror = () => {
         es.close();
