@@ -17,9 +17,11 @@ const settingsSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.Mixed,
     default: () => ({
       calendar:     { x: 0, y: 0, w: 4, h: 6 },
-      weeklyTodos:  { x: 4, y: 0, w: 5, h: 6 },
-      habitTracker: { x: 9, y: 0, w: 3, h: 4 },
-      musicPlayer:  { x: 9, y: 4, w: 3, h: 5 }
+      weeklyGoals:  { x: 4, y: 0, w: 4, h: 3 },
+      weeklyTodos:  { x: 4, y: 3, w: 4, h: 5 },
+      habitTracker: { x: 8, y: 0, w: 4, h: 5 },
+      musicPlayer:  { x: 8, y: 5, w: 4, h: 4 },
+      progress:     { x: 0, y: 8, w: 12, h: 4 }
     })
   },
 
@@ -35,6 +37,9 @@ const settingsSchema = new mongoose.Schema({
       showSongName: { type: Boolean, default: true },
       showJacket:   { type: Boolean, default: true },
       showPlaylist: { type: Boolean, default: true }
+    },
+    progress: {
+      enabled: { type: Boolean, default: true }
     }
   }
 }, { timestamps: true });
@@ -44,23 +49,31 @@ settingsSchema.statics.getSettings = async function (userId) {
   let s = await this.findOne({ userId });
   if (!s) s = await this.create({ userId });
 
-  // Back-fill gridLayout if missing (e.g. older documents)
+  // Back-fill gridLayout if missing entirely
   if (!s.gridLayout) {
     s.gridLayout = {
       calendar:     { x: 0, y: 0, w: 4, h: 6 },
-      weeklyTodos:  { x: 4, y: 0, w: 5, h: 6 },
-      habitTracker: { x: 9, y: 0, w: 3, h: 4 },
-      musicPlayer:  { x: 9, y: 4, w: 3, h: 5 }
+      weeklyGoals:  { x: 4, y: 0, w: 4, h: 3 },
+      weeklyTodos:  { x: 4, y: 3, w: 4, h: 5 },
+      habitTracker: { x: 8, y: 0, w: 4, h: 5 },
+      musicPlayer:  { x: 8, y: 5, w: 4, h: 4 },
+      progress:     { x: 0, y: 8, w: 12, h: 4 }
     };
     s.markModified('gridLayout');
     await s.save();
   }
 
-  if (s.gridLayout && !s.gridLayout.musicPlayer) {
-    s.gridLayout.musicPlayer = { x: 9, y: 4, w: 3, h: 5 };
-    s.markModified('gridLayout');
-    await s.save();
+  // Back-fill individual keys added in later versions
+  let dirty = false;
+  const backfill = {
+    musicPlayer:  { x: 8, y: 5, w: 4, h: 4 },
+    weeklyGoals:  { x: 4, y: 0, w: 4, h: 3 },
+    progress:     { x: 0, y: 8, w: 12, h: 4 }
+  };
+  for (const [key, def] of Object.entries(backfill)) {
+    if (!s.gridLayout[key]) { s.gridLayout[key] = def; dirty = true; }
   }
+  if (dirty) { s.markModified('gridLayout'); await s.save(); }
 
   return s;
 };

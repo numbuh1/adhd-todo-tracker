@@ -1,0 +1,40 @@
+<div class="module-card weekly-todos-module">
+
+  <div class="module-header">
+    <span class="module-icon">✅</span>
+    <h2 class="module-title">Daily To-Dos</h2>
+    <span class="week-badge"><%= weekStart %></span>
+  </div>
+
+  <div class="days-grid">
+    <% days.forEach(day => { %>
+    <div class="day-column<%= day.isToday ? ' day-today' : '' %>">
+      <div class="day-header">
+        <span class="day-label"><%= day.dateLabel %></span>
+        <span class="today-badge" style="visibility: <%= day.isToday ? 'visible' : 'hidden' %>">today</span>
+      </div>
+
+      <div class="day-todos">
+        <% if (day.todos && day.todos.length > 0) { %>
+          <% day.todos.forEach(todo => { %>
+          <label class="todo-label<%= todo.completed ? ' completed' : '' %>"
+                 data-week-id="<%= weekId %>"
+                 data-day-index="<%= day.dayIndex %>"
+                 data-todo-id="<%= todo._id %>"
+                 data-type="todo">
+            <input type="checkbox"
+                   class="todo-check"
+                   onclick="event.stopPropagation()"
+                   <%= todo.completed ? 'checked' : '' %>>
+            <span class="todo-text"><%= todo.text %></span>
+          </label>
+          <% }); %>
+        <% } else { %>
+          <span class="no-items-sm">—</span>
+        <% } %>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+
+</div>

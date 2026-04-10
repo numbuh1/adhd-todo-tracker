@@ -91,6 +91,39 @@ html, body {
 }
 .view-dashboard-btn:hover { background: var(--accent-hover); }
 
+.sidebar-user {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: .75rem;
+  padding-top: .6rem;
+  border-top: 1px solid rgba(255,255,255,0.07);
+  gap: .5rem;
+}
+.sidebar-user-name {
+  font-size: .75rem;
+  opacity: .6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+.sidebar-logout-btn {
+  background: rgba(248,113,113,.15);
+  border: 1px solid rgba(248,113,113,.25);
+  color: #f87171;
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: .72rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .15s, color .15s;
+}
+.sidebar-logout-btn:hover {
+  background: rgba(248,113,113,.35);
+  color: #fca5a5;
+}
+
 /* ── Main content ─────────────────────────────────────────── */
 .admin-main {
   flex: 1;

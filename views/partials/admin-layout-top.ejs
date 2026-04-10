@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><%= title %> — ADHD Tracker Admin</title>
-  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="<%= basePath %>/css/admin.css">
 </head>
 <body>
 
@@ -16,29 +16,40 @@
       <span class="brand-name">ADHD Tracker</span>
     </div>
     <nav class="sidebar-nav">
-      <a href="admin" class="nav-item<%= activePage === 'home' ? ' active' : '' %>">
+      <a href="<%= basePath %>/admin" class="nav-item<%= activePage === 'home' ? ' active' : '' %>">
         <span class="nav-icon">🏠</span> Dashboard
       </a>
-      <a href="admin/calendar" class="nav-item<%= activePage === 'calendar' ? ' active' : '' %>">
+      <a href="<%= basePath %>/admin/calendar" class="nav-item<%= activePage === 'calendar' ? ' active' : '' %>">
         <span class="nav-icon">📅</span> Calendar & Events
       </a>
-      <a href="admin/weekly-todos" class="nav-item<%= activePage === 'weekly-todos' ? ' active' : '' %>">
+      <a href="<%= basePath %>/admin/weekly-todos" class="nav-item<%= activePage === 'weekly-todos' ? ' active' : '' %>">
         <span class="nav-icon">✅</span> Weekly To-Dos
       </a>
-      <a href="admin/habit-tracker" class="nav-item<%= activePage === 'habit-tracker' ? ' active' : '' %>">
+      <a href="<%= basePath %>/admin/habit-tracker" class="nav-item<%= activePage === 'habit-tracker' ? ' active' : '' %>">
         <span class="nav-icon">🔥</span> Habit Tracker
       </a>
-      <a href="admin/music-player" class="nav-item<%= activePage === 'music-player' ? ' active' : '' %>">
+      <a href="<%= basePath %>/admin/music-player" class="nav-item<%= activePage === 'music-player' ? ' active' : '' %>">
         <span class="nav-icon">🎵</span> Music Player
       </a>
-      <a href="admin/settings" class="nav-item<%= activePage === 'settings' ? ' active' : '' %>">
+      <a href="<%= basePath %>/admin/progress" class="nav-item<%= activePage === 'progress' ? ' active' : '' %>">
+        <span class="nav-icon">📊</span> Progress Tracker
+      </a>
+      <a href="<%= basePath %>/admin/settings" class="nav-item<%= activePage === 'settings' ? ' active' : '' %>">
         <span class="nav-icon">⚙️</span> Settings
       </a>
     </nav>
+
     <div class="sidebar-footer">
-      <a href="/" target="_blank" class="view-dashboard-btn">
+      <a href="<%= basePath %>/" target="_blank" class="view-dashboard-btn">
         📊 Open Dashboard
       </a>
+      <!-- User info + logout -->
+      <div class="sidebar-user">
+        <span class="sidebar-user-name">👤 <%= currentUser ? currentUser.username : 'User' %></span>
+        <form action="<%= basePath %>/logout" method="POST" style="margin:0">
+          <button type="submit" class="sidebar-logout-btn">Sign Out</button>
+        </form>
+      </div>
     </div>
   </aside>
 

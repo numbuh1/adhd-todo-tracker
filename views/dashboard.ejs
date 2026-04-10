@@ -7,25 +7,22 @@
 
   <!-- Gridstack -->
   <link href="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack.min.css" rel="stylesheet">
-
   <!-- App styles -->
-  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="<%= basePath %>/css/dashboard.css">
 
   <style>
     :root {
-      --accent:  <%= settings.theme.accentColor %>;
-      --bg:      <%= settings.theme.backgroundColor %>;
-      --card:    <%= settings.theme.cardColor %>;
-      --text:    <%= settings.theme.textColor %>;
+      --accent: <%= settings.theme.accentColor %>;
+      --bg:     <%= settings.theme.backgroundColor %>;
+      --card:   <%= settings.theme.cardColor %>;
+      --text:   <%= settings.theme.textColor %>;
     }
     body { background-color: var(--bg); color: var(--text); }
     <% if (settings.theme.wallpaper) { %>
     body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0;
-      background: url('<%= settings.theme.wallpaper %>') center/cover no-repeat;
-      opacity: <%= settings.theme.wallpaperOpacity %>;
-      pointer-events: none;
+      content: ''; position: fixed; inset: 0; z-index: 0;
+      background: url('<%= basePath %><%= settings.theme.wallpaper %>') center/cover no-repeat;
+      opacity: <%= settings.theme.wallpaperOpacity %>; pointer-events: none;
     }
     <% } %>
     .module-card            { background: var(--card); }
@@ -34,9 +31,72 @@
     .day-today .day-label   { color: var(--accent); }
     .today-badge            { background: var(--accent); }
     .module-icon            { color: var(--accent); }
+
+    /* ── Layout Profile Picker ────────────────────────────── */
+    .lp-wrap { position: relative; }
+    .lp-btn {
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+      color: var(--text); border-radius: 8px; padding: 4px 12px;
+      font-size: .8rem; cursor: pointer; display: flex; align-items: center; gap: 5px;
+      transition: background .15s;
+    }
+    .lp-btn:hover { background: rgba(255,255,255,0.15); }
+    .lp-panel {
+      position: absolute; top: calc(100% + 6px); right: 0;
+      width: 260px; background: #1a1a35;
+      border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5); z-index: 500; overflow: hidden;
+      display: none;
+    }
+    .lp-panel.open { display: block; }
+    .lp-panel-head {
+      padding: 10px 12px 6px; font-size: .7rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .07em; opacity: .45;
+    }
+    .lp-save-row {
+      display: flex; gap: 6px; padding: 4px 10px 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    .lp-name-input {
+      flex: 1; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px; padding: 5px 8px; color: var(--text); font-size: .8rem; outline: none;
+    }
+    .lp-name-input:focus { border-color: var(--accent); }
+    .lp-save-submit {
+      background: var(--accent); border: none; border-radius: 6px;
+      color: #fff; padding: 5px 10px; font-size: .8rem; cursor: pointer; white-space: nowrap;
+    }
+    .lp-save-submit:hover { filter: brightness(1.15); }
+    .lp-list { max-height: 240px; overflow-y: auto; padding: 4px 0 6px; }
+    .lp-item {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 10px; transition: background .12s;
+    }
+    .lp-item:hover { background: rgba(255,255,255,0.05); }
+    .lp-item-name {
+      flex: 1; font-size: .82rem; white-space: nowrap; overflow: hidden;
+      text-overflow: ellipsis; cursor: default;
+    }
+    .lp-load-btn {
+      background: rgba(124,58,237,.25); border: none; border-radius: 5px;
+      color: #c4b5fd; font-size: .72rem; padding: 3px 8px; cursor: pointer;
+      white-space: nowrap; transition: background .15s;
+    }
+    .lp-load-btn:hover { background: var(--accent); color: #fff; }
+    .lp-del-btn {
+      background: none; border: none; color: rgba(255,255,255,0.3);
+      cursor: pointer; font-size: .75rem; padding: 3px 5px; border-radius: 4px;
+      transition: color .15s, background .15s;
+    }
+    .lp-del-btn:hover { color: #f87171; background: rgba(248,113,113,.15); }
+    .lp-empty { padding: 12px; font-size: .78rem; opacity: .4; text-align: center; }
+    .lp-msg { padding: 4px 10px 6px; font-size: .72rem; opacity: .6; }
   </style>
 </head>
 <body>
+
+  <!-- Inject base path for JS -->
+  <script>window.BASE_PATH = '<%= basePath %>';</script>
 
   <!-- ── Header ─────────────────────────────────────────── -->
   <header class="dashboard-header" id="dash-header">
@@ -47,7 +107,23 @@
     <div class="header-right">
       <span id="clock-date" class="header-date"></span>
       <span id="clock-time" class="header-time"></span>
-      <a href="admin" class="header-admin-link" title="Admin">⚙️</a>
+
+      <!-- Layout Profile Picker -->
+      <div class="lp-wrap" id="lpWrap">
+        <button class="lp-btn" id="lpBtn" title="Manage layout profiles">
+          📐 <span>Layouts</span>
+        </button>
+        <div class="lp-panel" id="lpPanel">
+          <div class="lp-panel-head">Save current layout as…</div>
+          <div class="lp-save-row">
+            <input class="lp-name-input" id="lpNameInput" type="text" placeholder="Profile name…" maxlength="40">
+            <button class="lp-save-submit" id="lpSaveBtn">💾 Save</button>
+          </div>
+          <div id="lpList"><div class="lp-empty">No saved profiles yet</div></div>
+        </div>
+      </div>
+
+      <a href="<%= basePath %>/admin" class="header-admin-link" title="Admin">⚙️</a>
     </div>
   </header>
 
@@ -56,63 +132,68 @@
   const GL = settings.gridLayout || {};
   const DEFAULTS = {
     calendar:     { x: 0, y: 0, w: 4, h: 6 },
-    weeklyTodos:  { x: 4, y: 0, w: 5, h: 6 },
-    habitTracker: { x: 9, y: 0, w: 3, h: 4 },
-    musicPlayer:  { x: 9, y: 4, w: 3, h: 5 }
+    weeklyGoals:  { x: 4, y: 0, w: 4, h: 3 },
+    weeklyTodos:  { x: 4, y: 3, w: 4, h: 5 },
+    habitTracker: { x: 8, y: 0, w: 4, h: 5 },
+    musicPlayer:  { x: 8, y: 5, w: 4, h: 4 },
+    progress:     { x: 0, y: 8, w: 12, h: 4 }
   };
-  function gs(key) {
-    return Object.assign({}, DEFAULTS[key], GL[key] || {});
-  }
+  function gs(key) { return Object.assign({}, DEFAULTS[key], GL[key] || {}); }
   %>
 
   <div class="grid-stack" id="main-grid">
 
-    <% if (calendarEnabled) { const p = gs('calendar'); %>
-    <div class="grid-stack-item"
-         gs-id="calendar"
-         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
-         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+    <% if (calendarEnabled)  { const p = gs('calendar'); %>
+    <div class="grid-stack-item" gs-id="calendar"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
       <div class="grid-stack-item-content"><%- calendarHtml %></div>
     </div>
     <% } %>
 
-    <% if (weeklyEnabled) { const p = gs('weeklyTodos'); %>
-    <div class="grid-stack-item"
-         gs-id="weeklyTodos"
-         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
-         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
-      <div class="grid-stack-item-content"><%- weeklyHtml %></div>
+    <% if (weeklyEnabled)    { const p = gs('weeklyGoals'); %>
+    <div class="grid-stack-item" gs-id="weeklyGoals"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- weeklyGoalsHtml %></div>
     </div>
     <% } %>
 
-    <% if (habitEnabled) { const p = gs('habitTracker'); %>
-    <div class="grid-stack-item"
-         gs-id="habitTracker"
-         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
-         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+    <% if (weeklyEnabled)    { const p = gs('weeklyTodos'); %>
+    <div class="grid-stack-item" gs-id="weeklyTodos"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- weeklyTodosHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (habitEnabled)     { const p = gs('habitTracker'); %>
+    <div class="grid-stack-item" gs-id="habitTracker"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
       <div class="grid-stack-item-content"><%- habitHtml %></div>
     </div>
     <% } %>
 
-    <% if (musicEnabled) { const p = gs('musicPlayer'); %>
-    <div class="grid-stack-item"
-         gs-id="musicPlayer"
-         gs-x="<%= p.x %>" gs-y="<%= p.y %>"
-         gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+    <% if (musicEnabled)     { const p = gs('musicPlayer'); %>
+    <div class="grid-stack-item" gs-id="musicPlayer"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
       <div class="grid-stack-item-content"><%- musicHtml %></div>
     </div>
     <% } %>
 
-    <% if (!calendarEnabled && !weeklyEnabled && !habitEnabled && !musicEnabled) { %>
+    <% if (progressEnabled)  { const p = gs('progress'); %>
+    <div class="grid-stack-item" gs-id="progress"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- progressHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (!calendarEnabled && !weeklyEnabled && !habitEnabled && !musicEnabled && !progressEnabled) { %>
     <div class="empty-dashboard">
-      <p>No modules enabled. <a href="admin/settings">Go to Settings →</a></p>
+      <p>No modules enabled. <a href="<%= basePath %>/admin/settings">Go to Settings →</a></p>
     </div>
     <% } %>
 
   </div>
 
-  <!-- Gridstack JS (must come before dashboard.js) -->
   <script src="https://cdn.jsdelivr.net/npm/gridstack@10.3.1/dist/gridstack-all.js"></script>
-  <script src="js/dashboard.js"></script>
+  <script src="<%= basePath %>/js/dashboard.js"></script>
 </body>
 </html>

@@ -12,7 +12,7 @@
   <!-- ── Module Settings ─────────────────────────────────── -->
   <div class="admin-card">
     <h2 class="card-title">⚙️ Module Settings</h2>
-    <form action="/admin/habit-tracker/settings" method="POST">
+    <form action="<%= basePath %>/admin/habit-tracker/settings" method="POST">
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Days to show on Dashboard</label>
@@ -36,15 +36,19 @@
   <!-- ── Add Habit ──────────────────────────────────────────── -->
   <div class="admin-card">
     <h2 class="card-title">➕ Add New Habit</h2>
-    <form action="/admin/habit-tracker/habits" method="POST" enctype="multipart/form-data">
+    <form action="<%= basePath %>/admin/habit-tracker/habits" method="POST" enctype="multipart/form-data">
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Name *</label>
           <input type="text" name="name" placeholder="e.g. Drink 2L water" required class="form-control">
         </div>
-        <div class="form-group form-group-sm">
-          <label class="form-label">Icon (emoji)</label>
-          <input type="text" name="icon" placeholder="💧" class="form-control" maxlength="4">
+        <div class="form-group form-group-sm" style="max-width:72px">
+          <label class="form-label">Icon</label>
+          <div class="emoji-field">
+            <input type="hidden" name="icon" value="💧" class="emoji-input">
+            <button type="button" class="emoji-pick-btn"
+                    onclick="_EmojiPicker.open(this, this.closest('.emoji-field').querySelector('.emoji-input'))">💧</button>
+          </div>
         </div>
         <div class="form-group form-group-sm">
           <label class="form-label">Color</label>
@@ -86,7 +90,7 @@
         <tr id="hview-<%= hId %>">
           <td>
             <% if (h.photo) { %>
-              <img src="<%= h.photo %>" alt="<%= h.name %>" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">
+              <img src="<%= basePath %><%= h.photo %>" alt="<%= h.name %>" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">
             <% } else { %>
               <span style="font-size:1.4rem"><%= h.icon %></span>
             <% } %>
@@ -95,7 +99,7 @@
           <td><span class="color-swatch" style="background:<%= h.color %>"></span></td>
           <td>
             <button class="btn btn-sm btn-secondary" onclick="toggleHabitEdit('<%= hId %>', true)">Edit</button>
-            <form action="/admin/habit-tracker/habits/<%= hId %>/delete" method="POST"
+            <form action="<%= basePath %>/admin/habit-tracker/habits/<%= hId %>/delete" method="POST"
                   style="display:inline" onsubmit="return confirm('Delete this habit and all its logs?')">
               <button type="submit" class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -105,13 +109,16 @@
         <!-- Edit row -->
         <tr id="hedit-<%= hId %>" style="display:none; background:#faf5ff;">
           <td colspan="4">
-            <form action="/admin/habit-tracker/habits/<%= hId %>/edit" method="POST"
+            <form action="<%= basePath %>/admin/habit-tracker/habits/<%= hId %>/edit" method="POST"
                   enctype="multipart/form-data">
               <div class="form-row" style="padding:.5rem 0">
-                <div class="form-group form-group-sm">
+                <div class="form-group form-group-sm" style="max-width:72px">
                   <label class="form-label">Icon</label>
-                  <input type="text" name="icon" value="<%= h.icon %>"
-                         class="form-control form-control-sm" maxlength="4" style="width:60px">
+                  <div class="emoji-field">
+                    <input type="hidden" name="icon" value="<%= h.icon %>" class="emoji-input">
+                    <button type="button" class="emoji-pick-btn"
+                            onclick="_EmojiPicker.open(this, this.closest('.emoji-field').querySelector('.emoji-input'))"><%- h.icon %></button>
+                  </div>
                 </div>
                 <div class="form-group">
                   <label class="form-label">Name</label>

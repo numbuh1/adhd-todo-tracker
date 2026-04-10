@@ -1,0 +1,211 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+  <div class="alert alert-success">✅ Saved!</div>
+  <% } %>
+  <% if (error) { %>
+  <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <!-- ── Add Task ──────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">➕ Add New Task</h2>
+    <form action="<%= basePath %>/admin/progress/tasks" method="POST">
+      <div class="form-row">
+        <div class="form-group form-group-sm" style="max-width:72px">
+          <label class="form-label">Icon</label>
+          <div class="emoji-field">
+            <input type="hidden" name="icon" value="📋" class="emoji-input">
+            <button type="button" class="emoji-pick-btn"
+                    onclick="_EmojiPicker.open(this, this.closest('.emoji-field').querySelector('.emoji-input'))">📋</button>
+          </div>
+        </div>
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Task Name *</label>
+          <input type="text" name="name" placeholder="e.g. Build MVP" required class="form-control">
+        </div>
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Description</label>
+          <input type="text" name="description" placeholder="Short description…" class="form-control">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Color</label>
+          <input type="color" name="color" value="#7c3aed" class="color-input">
+        </div>
+      </div>
+      <div class="form-row" style="margin-top:-.25rem">
+        <div class="form-group" style="flex:1">
+          <label class="form-label">Progress: <span id="addProgVal">0</span>%</label>
+          <input type="range" name="progress" min="0" max="100" value="0" class="range-input"
+                 oninput="document.getElementById('addProgVal').textContent = this.value">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Status</label>
+          <select name="status" class="form-control">
+            <option value="idle">Idle</option>
+            <option value="in-progress">In Progress</option>
+          </select>
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Deadline</label>
+          <input type="date" name="deadline" class="form-control">
+        </div>
+        <div class="form-group form-group-sm" style="justify-content:flex-end; padding-bottom:.3rem">
+          <label class="checkbox-label">
+            <input type="checkbox" name="visible" checked> Show on Dashboard
+          </label>
+        </div>
+        <div class="form-group form-group-btn">
+          <button type="submit" class="btn btn-primary">Add Task</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Task List ─────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">📋 All Tasks (<%= tasks.length %>)</h2>
+
+    <% if (tasks.length === 0) { %>
+      <p class="empty-msg">No tasks yet. Add one above!</p>
+    <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Icon</th>
+          <th>Name</th>
+          <th>Description</th>
+          <th>Progress</th>
+          <th>Status</th>
+          <th>Color</th>
+          <th>Deadline</th>
+          <th>Visible</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% tasks.forEach(t => {
+          const tId = t._id.toString();
+        %>
+        <!-- View row -->
+        <tr id="tview-<%= tId %>">
+          <td style="font-size:1.3rem"><%= t.icon %></td>
+          <td><strong><%= t.name %></strong></td>
+          <td style="opacity:.7"><%= t.description || '—' %></td>
+          <td>
+            <div style="display:flex;align-items:center;gap:6px;min-width:100px">
+              <div style="flex:1;height:6px;background:rgba(255,255,255,0.1);border-radius:3px;overflow:hidden">
+                <div style="height:100%;width:<%= t.progress %>%;background:<%= t.color %>;border-radius:3px"></div>
+              </div>
+              <span style="font-size:.75rem;opacity:.7"><%= t.progress %>%</span>
+            </div>
+          </td>
+          <td>
+            <span class="status-badge status-<%= t.status %>">
+              <%= t.status === 'in-progress' ? '🔥 In Progress' : '💤 Idle' %>
+            </span>
+          </td>
+          <td><span class="color-swatch" style="background:<%= t.color %>"></span></td>
+          <td style="font-size:.8rem;opacity:.7">
+            <%= t.deadline ? new Date(t.deadline).toLocaleDateString() : '—' %>
+          </td>
+          <td style="text-align:center"><%= t.visible ? '✅' : '🚫' %></td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="toggleTaskEdit('<%= tId %>', true)">Edit</button>
+            <form action="<%= basePath %>/admin/progress/tasks/<%= tId %>/delete" method="POST"
+                  style="display:inline" onsubmit="return confirm('Delete this task?')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- Edit row -->
+        <tr id="tedit-<%= tId %>" style="display:none; background:#0d0d22;">
+          <td colspan="9">
+            <form action="<%= basePath %>/admin/progress/tasks/<%= tId %>/edit" method="POST"
+                  style="padding:.5rem 0">
+              <div class="form-row">
+                <div class="form-group form-group-sm" style="max-width:72px">
+                  <label class="form-label">Icon</label>
+                  <div class="emoji-field">
+                    <input type="hidden" name="icon" value="<%= t.icon %>" class="emoji-input">
+                    <button type="button" class="emoji-pick-btn"
+                            onclick="_EmojiPicker.open(this, this.closest('.emoji-field').querySelector('.emoji-input'))"><%- t.icon %></button>
+                  </div>
+                </div>
+                <div class="form-group" style="flex:2">
+                  <label class="form-label">Name</label>
+                  <input type="text" name="name" value="<%= t.name %>"
+                         class="form-control form-control-sm" required>
+                </div>
+                <div class="form-group" style="flex:2">
+                  <label class="form-label">Description</label>
+                  <input type="text" name="description" value="<%= t.description %>"
+                         class="form-control form-control-sm">
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Color</label>
+                  <input type="color" name="color" value="<%= t.color %>" class="color-input">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex:1">
+                  <label class="form-label">Progress: <span id="editProg-<%= tId %>"><%= t.progress %></span>%</label>
+                  <input type="range" name="progress" min="0" max="100" value="<%= t.progress %>"
+                         class="range-input"
+                         oninput="document.getElementById('editProg-<%= tId %>').textContent = this.value">
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Status</label>
+                  <select name="status" class="form-control form-control-sm">
+                    <option value="idle" <%= t.status === 'idle' ? 'selected' : '' %>>Idle</option>
+                    <option value="in-progress" <%= t.status === 'in-progress' ? 'selected' : '' %>>In Progress</option>
+                  </select>
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Deadline</label>
+                  <input type="date" name="deadline"
+                         value="<%= t.deadline ? new Date(t.deadline).toISOString().slice(0,10) : '' %>"
+                         class="form-control form-control-sm">
+                </div>
+                <div class="form-group form-group-sm" style="justify-content:flex-end;padding-bottom:.3rem">
+                  <label class="checkbox-label" style="font-size:.78rem">
+                    <input type="checkbox" name="visible" <%= t.visible ? 'checked' : '' %>> Visible
+                  </label>
+                </div>
+                <div class="form-group form-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                  <button type="button" class="btn btn-sm btn-secondary"
+                          onclick="toggleTaskEdit('<%= tId %>', false)">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+
+</div>
+
+<style>
+.status-badge {
+  display: inline-block; padding: 2px 8px; border-radius: 20px;
+  font-size: .72rem; font-weight: 600;
+}
+.status-idle        { background: rgba(148,163,184,.15); color: #94a3b8; }
+.status-in-progress { background: rgba(251,146,60,.15);  color: #fb923c; }
+</style>
+
+<script>
+function toggleTaskEdit(id, show) {
+  document.getElementById('tview-' + id).style.display = show ? 'none' : '';
+  document.getElementById('tedit-' + id).style.display = show ? ''     : 'none';
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

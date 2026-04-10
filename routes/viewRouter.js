@@ -3,65 +3,50 @@ const ejs      = require('ejs');
 const dayjs    = require('dayjs');
 const router   = express.Router();
 
-const Settings    = require('../models/Settings');
-const calendarMod = require('../modules/calendar/index');
-const weeklyMod   = require('../modules/weekly-todos/index');
-const habitMod    = require('../modules/habit-tracker/index');
-const musicMod    = require('../modules/music-player/index');
+const Settings     = require('../models/Settings');
+const calendarMod  = require('../modules/calendar/index');
+const weeklyMod    = require('../modules/weekly-todos/index');
+const habitMod     = require('../modules/habit-tracker/index');
+const musicMod     = require('../modules/music-player/index');
+const progressMod  = require('../modules/progress/index');
 
-// GET /  →  Main dashboard (2nd-monitor view)
 router.get('/', async (req, res, next) => {
   try {
-    const settings = await Settings.getSettings();
+    const userId   = req.session.userId;
+    const settings = await Settings.getSettings(userId);
+    const basePath = req.app.locals.basePath || '';
 
-    // Gather data from each enabled module
     const calendarData = settings.modules.calendar.enabled
-      ? await calendarMod.getDashboardData()
-      : null;
+      ? await calendarMod.getDashboardData(userId) : null;
 
     const weeklyData = settings.modules.weeklyTodos.enabled
-      ? await weeklyMod.getDashboardData()
-      : null;
+      ? await weeklyMod.getDashboardData(userId) : null;
 
-    const daysToShow = settings.modules.habitTracker
-      ? (settings.modules.habitTracker.daysToShow || 3)
-      : 3;
-    const habitData = (settings.modules.habitTracker && settings.modules.habitTracker.enabled)
-      ? await habitMod.getDashboardData(daysToShow)
-      : null;
+    const daysToShow = settings.modules.habitTracker?.daysToShow || 3;
+    const habitData  = settings.modules.habitTracker?.enabled
+      ? await habitMod.getDashboardData(userId, daysToShow) : null;
 
-    const musicData = (settings.modules.musicPlayer && settings.modules.musicPlayer.enabled)
-      ? await musicMod.getDashboardData()
-      : null;
+    const musicData  = settings.modules.musicPlayer?.enabled
+      ? await musicMod.getDashboardData(userId) : null;
 
-    // Pre-render module partials → HTML strings
-    // Note: pass dayjs explicitly — require() is not available inside EJS templates
-    const calendarHtml = calendarData
-      ? await ejs.renderFile(calendarMod.viewPath, { ...calendarData, dayjs })
-      : '';
+    const progressData = settings.modules.progress?.enabled
+      ? await progressMod.getDashboardData(userId) : null;
 
-    const weeklyHtml = weeklyData
-      ? await ejs.renderFile(weeklyMod.viewPath, weeklyData)
-      : '';
-
-    const habitHtml = habitData
-      ? await ejs.renderFile(habitMod.viewPath, habitData)
-      : '';
-
-    const musicHtml = musicData
-      ? await ejs.renderFile(musicMod.viewPath, musicData)
-      : '';
+    const calendarHtml  = calendarData  ? await ejs.renderFile(calendarMod.viewPath,        { ...calendarData,  dayjs, basePath }) : '';
+    const weeklyGoalsHtml = weeklyData  ? await ejs.renderFile(weeklyMod.goalsViewPath,      { ...weeklyData,   basePath })         : '';
+    const weeklyTodosHtml = weeklyData  ? await ejs.renderFile(weeklyMod.todosViewPath,      { ...weeklyData,   basePath })         : '';
+    const habitHtml     = habitData     ? await ejs.renderFile(habitMod.viewPath,            { ...habitData,    basePath })         : '';
+    const musicHtml     = musicData     ? await ejs.renderFile(musicMod.viewPath,            { ...musicData,    basePath })         : '';
+    const progressHtml  = progressData  ? await ejs.renderFile(progressMod.viewPath,         { ...progressData, basePath })         : '';
 
     res.render('dashboard', {
       settings,
-      calendarHtml,
-      weeklyHtml,
-      habitHtml,
-      musicHtml,
-      calendarEnabled: !!calendarData,
-      weeklyEnabled:   !!weeklyData,
-      habitEnabled:    !!habitData,
-      musicEnabled:    !!musicData
+      calendarHtml, weeklyGoalsHtml, weeklyTodosHtml, habitHtml, musicHtml, progressHtml,
+      calendarEnabled:  !!calendarData,
+      weeklyEnabled:    !!weeklyData,
+      habitEnabled:     !!habitData,
+      musicEnabled:     !!musicData,
+      progressEnabled:  !!progressData
     });
   } catch (err) {
     next(err);

@@ -7,7 +7,7 @@
 
     <div class="week-grid">
       <% weeks.forEach(w => { %>
-      <a href="admin/weekly-todos/<%= w.weekStart %>/edit"
+      <a href="<%= basePath %>/admin/weekly-todos/<%= w.weekStart %>/edit"
          class="week-card<%= w.isCurrent ? ' week-card-current' : '' %>">
         <div class="week-card-label">
           <% if (w.isCurrent) { %><span class="current-badge">Current Week</span><% } %>
@@ -33,6 +33,7 @@
 </div>
 
 <script>
+const _BP = '<%= basePath %>';
 function goToWeek() {
   const val = document.getElementById('customDate').value;
   if (!val) return;
@@ -41,7 +42,7 @@ function goToWeek() {
   const diff = dow === 0 ? -6 : 1 - dow;
   d.setDate(d.getDate() + diff);
   const iso = d.toISOString().slice(0,10);
-  window.location.href = `/admin/weekly-todos/${iso}/edit`;
+  window.location.href = `${_BP}/admin/weekly-todos/${iso}/edit`;
 }
 </script>
 

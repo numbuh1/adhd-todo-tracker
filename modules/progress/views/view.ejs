@@ -1,0 +1,306 @@
+<div class="module-card progress-module">
+
+  <div class="module-header">
+    <span class="module-icon">📊</span>
+    <h2 class="module-title">Progress Tracker</h2>
+  </div>
+
+  <% if (!tasks || tasks.length === 0) { %>
+    <p class="no-items">No tasks yet. <a href="<%= basePath %>/admin/progress" style="color:var(--accent)">Add some →</a></p>
+  <% } else { %>
+  <div class="prog-list">
+    <% tasks.forEach(task => {
+      const tId     = task._id.toString();
+      const pct     = task.progress || 0;
+      const onFire  = task.status === 'in-progress';
+      const deadlineStr = task.deadline
+        ? new Date(task.deadline).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
+        : null;
+    %>
+    <div class="prog-card<%= onFire ? ' prog-on-fire' : '' %>" data-task-id="<%= tId %>">
+
+      <!-- Header: icon + name + deadline + status btn -->
+      <div class="prog-card-top">
+        <span class="prog-icon"><%= task.icon %></span>
+        <div class="prog-name-wrap">
+          <span class="prog-name"><%= task.name %></span>
+          <% if (task.description) { %>
+            <span class="prog-desc"><%= task.description %></span>
+          <% } %>
+        </div>
+        <div class="prog-meta">
+          <% if (deadlineStr) { %>
+            <span class="prog-deadline">📅 <%= deadlineStr %></span>
+          <% } %>
+          <button class="prog-status-btn<%= onFire ? ' prog-status-active' : '' %>"
+                  data-task-id="<%= tId %>"
+                  title="Toggle status">
+            <%= onFire ? '🔥 In Progress' : '💤 Idle' %>
+          </button>
+        </div>
+      </div>
+
+      <!-- Seek bar row -->
+      <div class="prog-seek-row">
+        <div class="prog-track" data-task-id="<%= tId %>" data-color="<%= task.color %>">
+          <!-- Glow layer (visible when in-progress) -->
+          <div class="prog-glow" style="width:<%= pct %>%; background:<%= task.color %>"></div>
+          <!-- Fill -->
+          <div class="prog-fill" style="width:<%= pct %>%; background:<%= task.color %>"></div>
+          <!-- Handle -->
+          <div class="prog-handle<%= onFire ? ' handle-fire' : '' %>"
+               style="left:<%= pct %>%"
+               data-pct="<%= pct %>">
+            <span class="handle-dot" style="background:<%= task.color %>"></span>
+            <span class="handle-fire-icon"><%= onFire ? '🔥' : '' %></span>
+          </div>
+        </div>
+        <span class="prog-pct"><%= pct %>%</span>
+      </div>
+
+    </div>
+    <% }); %>
+  </div>
+  <% } %>
+
+</div>
+
+<style>
+/* ── Progress Module ──────────────────────────────────────── */
+.progress-module { display: flex; flex-direction: column; height: 100%; }
+.progress-module .module-header { flex-shrink: 0; }
+
+.prog-list {
+  flex: 1; overflow-y: auto; display: flex; flex-direction: column;
+  gap: 10px; padding: 2px 2px 4px;
+}
+
+/* ── Task Card ──────────────────────────────────────────── */
+.prog-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 10px;
+  padding: 10px 12px;
+  transition: border-color .25s, background .25s;
+}
+.prog-card.prog-on-fire {
+  border-color: rgba(251,146,60,.35);
+  background: rgba(251,146,60,.05);
+}
+
+.prog-card-top {
+  display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px;
+}
+.prog-icon { font-size: 1.5rem; line-height: 1; flex-shrink: 0; margin-top: 1px; }
+.prog-name-wrap { flex: 1; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.prog-name { font-size: .9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prog-desc { font-size: .75rem; opacity: .5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.prog-meta { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+.prog-deadline { font-size: .72rem; opacity: .5; white-space: nowrap; }
+
+/* Status button */
+.prog-status-btn {
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 20px;
+  color: inherit;
+  font-size: .72rem;
+  padding: 3px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background .2s, border-color .2s, transform .1s;
+  user-select: none;
+}
+.prog-status-btn:hover { background: rgba(255,255,255,0.14); }
+.prog-status-btn:active { transform: scale(.95); }
+.prog-status-btn.prog-status-active {
+  background: rgba(251,146,60,.18);
+  border-color: rgba(251,146,60,.4);
+  color: #fb923c;
+}
+
+/* ── Seek Bar ─────────────────────────────────────────────── */
+.prog-seek-row {
+  display: flex; align-items: center; gap: 8px;
+}
+.prog-track {
+  position: relative; flex: 1;
+  height: 8px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 4px;
+  cursor: pointer;
+  user-select: none;
+  overflow: visible;
+}
+/* subtle animated glow when in-progress */
+.prog-on-fire .prog-glow {
+  position: absolute; inset: -3px 0;
+  border-radius: 4px;
+  opacity: 0.35;
+  filter: blur(6px);
+  animation: glow-pulse 1.8s ease-in-out infinite;
+  pointer-events: none;
+}
+.prog-glow { display: none; }
+.prog-on-fire .prog-glow { display: block; }
+
+@keyframes glow-pulse {
+  0%, 100% { opacity: .2; }
+  50%       { opacity: .5; }
+}
+
+.prog-fill {
+  position: absolute; top: 0; left: 0;
+  height: 100%; border-radius: 4px;
+  pointer-events: none;
+  transition: width .05s linear;
+}
+
+.prog-handle {
+  position: absolute; top: 50%;
+  transform: translate(-50%, -50%);
+  width: 18px; height: 18px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: grab; z-index: 3;
+  pointer-events: none; /* handled by track */
+}
+.prog-handle:active { cursor: grabbing; }
+
+.handle-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255,255,255,0.85);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+  transition: transform .15s;
+  flex-shrink: 0;
+}
+.prog-track:active .handle-dot,
+.prog-track.dragging .handle-dot { transform: scale(1.25); }
+
+.handle-fire-icon {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.2rem;
+  line-height: 1;
+  pointer-events: none;
+  display: none;
+}
+.handle-fire .handle-dot { display: none; }
+.handle-fire .handle-fire-icon {
+  display: block;
+  animation: fire-dance 0.55s ease-in-out infinite alternate;
+}
+
+@keyframes fire-dance {
+  0%   { transform: translateX(-50%) scale(1)    rotate(-5deg); filter: brightness(1); }
+  50%  { transform: translateX(-48%) scale(1.15) rotate(3deg);  filter: brightness(1.3); }
+  100% { transform: translateX(-52%) scale(0.95) rotate(-3deg); filter: brightness(.9); }
+}
+
+.prog-pct {
+  font-size: .78rem;
+  font-weight: 700;
+  opacity: .7;
+  min-width: 34px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+</style>
+
+<script>
+(function initProgressModule() {
+  const BP = window.BASE_PATH || '';
+
+  // ── Seek drag ─────────────────────────────────────────────
+  let activeTrack = null;
+
+  function pctFromEvent(track, e) {
+    const rect = track.getBoundingClientRect();
+    const x    = Math.max(0, Math.min((e.clientX ?? e.touches?.[0]?.clientX ?? 0) - rect.left, rect.width));
+    return Math.round((x / rect.width) * 100);
+  }
+
+  function applyPct(track, pct) {
+    track.querySelector('.prog-fill').style.width  = pct + '%';
+    track.querySelector('.prog-glow').style.width  = pct + '%';
+    const handle = track.querySelector('.prog-handle');
+    handle.style.left     = pct + '%';
+    handle.dataset.pct    = pct;
+    const card = track.closest('.prog-card');
+    if (card) card.querySelector('.prog-pct').textContent = pct + '%';
+  }
+
+  async function saveProgress(taskId, pct) {
+    try {
+      await fetch(BP + '/admin/progress/api/update-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, progress: pct })
+      });
+    } catch(e) { console.warn('progress save failed', e); }
+  }
+
+  document.querySelectorAll('.prog-track').forEach(track => {
+    track.addEventListener('pointerdown', e => {
+      activeTrack = track;
+      track.setPointerCapture(e.pointerId);
+      track.classList.add('dragging');
+      applyPct(track, pctFromEvent(track, e));
+      e.preventDefault();
+    });
+    track.addEventListener('pointermove', e => {
+      if (activeTrack !== track) return;
+      applyPct(track, pctFromEvent(track, e));
+    });
+    track.addEventListener('pointerup', e => {
+      if (activeTrack !== track) return;
+      const pct    = pctFromEvent(track, e);
+      applyPct(track, pct);
+      track.classList.remove('dragging');
+      activeTrack = null;
+      saveProgress(track.dataset.taskId, pct);
+    });
+    track.addEventListener('pointercancel', () => {
+      if (activeTrack === track) {
+        track.classList.remove('dragging');
+        activeTrack = null;
+      }
+    });
+  });
+
+  // ── Status toggle ─────────────────────────────────────────
+  document.querySelectorAll('.prog-status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const taskId = btn.dataset.taskId;
+      try {
+        const res  = await fetch(BP + '/admin/progress/api/toggle-status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId })
+        });
+        const data = await res.json();
+        if (!data.ok) return;
+
+        const onFire = data.status === 'in-progress';
+        const card   = btn.closest('.prog-card');
+        const handle = card.querySelector('.prog-handle');
+        const track  = card.querySelector('.prog-track');
+
+        // Update button
+        btn.textContent = onFire ? '🔥 In Progress' : '💤 Idle';
+        btn.classList.toggle('prog-status-active', onFire);
+
+        // Update card fire state
+        card.classList.toggle('prog-on-fire', onFire);
+
+        // Update handle fire state
+        handle.classList.toggle('handle-fire', onFire);
+        handle.querySelector('.handle-fire-icon').textContent = onFire ? '🔥' : '';
+
+      } catch(e) { console.warn('status toggle failed', e); }
+    });
+  });
+})();
+</script>

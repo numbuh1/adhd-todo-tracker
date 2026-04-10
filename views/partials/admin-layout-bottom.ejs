@@ -1,5 +1,106 @@
   </main>
 </div>
 
+<!-- ── Emoji Mart ──────────────────────────────────────────── -->
+<script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
+<style>
+  /* ── Emoji pick button ───────────────────────── */
+  .emoji-field {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+  }
+  .emoji-pick-btn {
+    font-size: 1.6rem;
+    line-height: 1;
+    width: 52px; height: 52px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s, border-color .15s, transform .1s;
+    user-select: none;
+  }
+  .emoji-pick-btn:hover {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(124,58,237,0.6);
+  }
+  .emoji-pick-btn:active { transform: scale(.93); }
+  .emoji-pick-btn.picker-open {
+    border-color: var(--accent, #7c3aed);
+    background: rgba(124,58,237,0.15);
+  }
+
+  /* ── Floating popup container ─────────────────── */
+  .emoji-popup-container {
+    position: fixed;
+    z-index: 9999;
+    filter: drop-shadow(0 8px 32px rgba(0,0,0,0.6));
+  }
+  /* Force dark theme on the picker web component */
+  .emoji-popup-container em-emoji-picker {
+    --background-rgb: 18, 18, 42;
+    --border-radius: 12px;
+  }
+</style>
+<script>
+/* ── Global emoji picker manager ──────────────────────────── */
+window._EmojiPicker = (function () {
+  let popup = null;
+  let activeBtn = null;
+
+  function close() {
+    if (popup) { popup.remove(); popup = null; }
+    if (activeBtn) { activeBtn.classList.remove('picker-open'); activeBtn = null; }
+  }
+
+  function open(btn, hiddenInput) {
+    /* Toggle off if same button clicked again */
+    if (activeBtn === btn) { close(); return; }
+    close();
+
+    activeBtn = btn;
+    btn.classList.add('picker-open');
+
+    /* Build popup */
+    popup = document.createElement('div');
+    popup.className = 'emoji-popup-container';
+
+    const picker = new EmojiMart.Picker({
+      theme: 'dark',
+      previewPosition: 'none',
+      skinTonePosition: 'none',
+      set: 'native',
+      onEmojiSelect(emoji) {
+        hiddenInput.value = emoji.native;
+        btn.textContent   = emoji.native;
+        close();
+      },
+      onClickOutside() { close(); }
+    });
+
+    popup.appendChild(picker);
+    document.body.appendChild(popup);
+
+    /* Position below the button, flip up if near bottom edge */
+    const rect = btn.getBoundingClientRect();
+    const pickerH = 435; // approximate picker height
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const top = spaceBelow >= pickerH
+      ? rect.bottom + 6
+      : rect.top - pickerH - 6;
+
+    popup.style.top  = Math.max(6, top) + 'px';
+    popup.style.left = Math.max(6, Math.min(rect.left, window.innerWidth - 356)) + 'px';
+  }
+
+  /* Close on Escape */
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') close(); });
+
+  return { open, close };
+})();
+</script>
+
 </body>
 </html>

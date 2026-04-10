@@ -3,7 +3,7 @@
 <div class="admin-content">
 
   <div class="edit-week-header">
-    <a href="admin/weekly-todos" class="btn btn-secondary btn-sm">← Back to Week Selector</a>
+    <a href="<%= basePath %>/admin/weekly-todos" class="btn btn-secondary btn-sm">← Back to Week Selector</a>
     <h1 class="page-title">📝 <%= weekLabel %></h1>
   </div>
 
@@ -14,7 +14,7 @@
     <h2 class="card-title">🎯 Weekly Goals</h2>
 
     <!-- Add goal -->
-    <form action="/admin/weekly-todos/<%= weekStart %>/goals" method="POST" class="add-form">
+    <form action="<%= basePath %>/admin/weekly-todos/<%= weekStart %>/goals" method="POST" class="add-form">
       <div class="form-row">
         <input type="text" name="text" placeholder="New goal…" class="form-control" required>
         <button type="submit" class="btn btn-primary">Add Goal</button>
@@ -33,7 +33,7 @@
           <span class="item-text<%= goal.completed ? ' item-done' : '' %>"><%= goal.text %></span>
           <div class="item-actions">
             <button class="btn btn-sm btn-secondary" onclick="toggleItemEdit('goal', '<%= goal._id %>')">Edit</button>
-            <form action="/admin/weekly-todos/<%= weekStart %>/goals/<%= goal._id %>/delete" method="POST" style="display:inline"
+            <form action="<%= basePath %>/admin/weekly-todos/<%= weekStart %>/goals/<%= goal._id %>/delete" method="POST" style="display:inline"
                   onsubmit="return confirm('Delete this goal?')">
               <button type="submit" class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -41,7 +41,7 @@
         </div>
 
         <!-- Edit mode -->
-        <form action="/admin/weekly-todos/<%= weekStart %>/goals/<%= goal._id %>/edit" method="POST"
+        <form action="<%= basePath %>/admin/weekly-todos/<%= weekStart %>/goals/<%= goal._id %>/edit" method="POST"
               id="edit-goal-<%= goal._id %>" class="item-edit" style="display:none">
           <div class="form-row">
             <input type="text" name="text" value="<%= goal.text %>" class="form-control" required>
@@ -77,7 +77,7 @@
         </div>
 
         <!-- Add todo for this day -->
-        <form action="/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos" method="POST" class="add-form-sm">
+        <form action="<%= basePath %>/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos" method="POST" class="add-form-sm">
           <div class="form-row-sm">
             <input type="text" name="text" placeholder="Add to-do…" class="form-control form-control-sm">
             <button type="submit" class="btn btn-xs btn-primary">+</button>
@@ -94,7 +94,7 @@
               <span class="item-text-sm<%= todo.completed ? ' item-done' : '' %>"><%= todo.text %></span>
               <div class="item-actions-sm">
                 <button class="btn btn-xs btn-secondary" onclick="toggleItemEdit('todo', '<%= todo._id %>')">✏️</button>
-                <form action="/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos/<%= todo._id %>/delete"
+                <form action="<%= basePath %>/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos/<%= todo._id %>/delete"
                       method="POST" style="display:inline"
                       onsubmit="return confirm('Delete?')">
                   <button type="submit" class="btn btn-xs btn-danger">🗑️</button>
@@ -102,7 +102,7 @@
               </div>
             </div>
 
-            <form action="/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos/<%= todo._id %>/edit"
+            <form action="<%= basePath %>/admin/weekly-todos/<%= weekStart %>/days/<%= day.dayIndex %>/todos/<%= todo._id %>/edit"
                   method="POST" id="edit-todo-<%= todo._id %>" class="item-edit-sm" style="display:none">
               <div class="form-row-sm">
                 <input type="text" name="text" value="<%= todo.text %>" class="form-control form-control-sm" required>

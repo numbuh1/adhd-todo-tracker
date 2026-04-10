@@ -9,7 +9,7 @@
   <!-- ── Add Event Form ──────────────────────────────────────── -->
   <div class="admin-card">
     <h2 class="card-title">➕ Add New Event</h2>
-    <form action="/admin/calendar/events" method="POST">
+    <form action="<%= basePath %>/admin/calendar/events" method="POST">
       <div class="form-row">
         <div class="form-group">
           <label class="form-label">Date *</label>
@@ -64,7 +64,7 @@
           <td><span class="color-swatch" style="background:<%= ev.color %>"></span></td>
           <td>
             <button class="btn btn-sm btn-secondary" onclick="startEdit('<%= evId %>')">Edit</button>
-            <form action="/admin/calendar/events/<%= evId %>/delete" method="POST" style="display:inline"
+            <form action="<%= basePath %>/admin/calendar/events/<%= evId %>/delete" method="POST" style="display:inline"
                   onsubmit="return confirm('Delete this event?')">
               <button type="submit" class="btn btn-sm btn-danger">Delete</button>
             </form>
@@ -74,7 +74,7 @@
         <!-- ── Edit row (hidden by default) ── -->
         <tr id="edit-<%= evId %>" style="display:none; background:#faf5ff;">
           <td colspan="5">
-            <form action="/admin/calendar/events/<%= evId %>/edit" method="POST">
+            <form action="<%= basePath %>/admin/calendar/events/<%= evId %>/edit" method="POST">
               <div class="form-row" style="padding:.5rem 0">
                 <div class="form-group">
                   <label class="form-label">Date</label>

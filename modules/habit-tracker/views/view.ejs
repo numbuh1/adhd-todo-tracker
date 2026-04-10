@@ -30,7 +30,7 @@
         <!-- Habit name + icon -->
         <td class="habit-name-cell">
           <% if (habit.photo) { %>
-            <img src="<%= habit.photo %>" class="habit-thumb" alt="<%= habit.name %>">
+            <img src="<%= basePath %><%= habit.photo %>" class="habit-thumb" alt="<%= habit.name %>">
           <% } else { %>
             <span class="habit-icon"><%= habit.icon %></span>
           <% } %>

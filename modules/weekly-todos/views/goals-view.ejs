@@ -1,0 +1,28 @@
+<div class="module-card weekly-goals-module">
+
+  <div class="module-header">
+    <span class="module-icon">🎯</span>
+    <h2 class="module-title">This Week's Goals</h2>
+    <span class="week-badge"><%= weekStart %></span>
+  </div>
+
+  <div class="goals-section">
+    <% if (goals && goals.length > 0) { %>
+      <% goals.forEach(goal => { %>
+      <label class="todo-label<%= goal.completed ? ' completed' : '' %>"
+             data-week-id="<%= weekId %>"
+             data-goal-id="<%= goal._id %>"
+             data-type="goal">
+        <input type="checkbox"
+               class="todo-check"
+               onclick="event.stopPropagation()"
+               <%= goal.completed ? 'checked' : '' %>>
+        <span class="todo-text"><%= goal.text %></span>
+      </label>
+      <% }); %>
+    <% } else { %>
+      <p class="no-items">No goals set for this week.</p>
+    <% } %>
+  </div>
+
+</div>

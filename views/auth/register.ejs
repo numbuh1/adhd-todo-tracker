@@ -94,7 +94,7 @@
     <div class="error-msg">⚠️ <%= error %></div>
     <% } %>
 
-    <form action="/register" method="POST">
+    <form action="<%= basePath %>/register" method="POST">
       <div class="form-row">
         <div class="form-group">
           <label for="username">Username <span style="color:#f87171">*</span></label>
