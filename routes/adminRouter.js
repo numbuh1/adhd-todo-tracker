@@ -17,17 +17,25 @@ const videoPlayerMod  = require('../modules/video-player/index');
 const bp = req => req.app.locals.basePath || '';
 
 // ── SSE notify on mutating POST requests ──────────────────
-// Excluded: grid-layout saves, layout-profile ops, video save-url
-// (these don't change content that the dashboard displays)
-const SSE_SKIP = [
-  '/settings/grid-layout',
-  '/layout-profiles',
-  '/video-player/api/save-url'
-];
+// Skip paths that are called FROM the dashboard itself
+// (toggles, seek-bar updates, grid-layout, video URL save).
+// Only admin-panel mutations (add / edit / delete / reorder) fire SSE.
+function shouldSkipSSE(path) {
+  // Dashboard UI interactions — UI already updates in place
+  if (path.startsWith('/layout-profiles/'))        return true;
+  if (path === '/settings/grid-layout')             return true;
+  if (path === '/video-player/api/save-url')        return true;
+  if (path === '/weekly-todos/api/toggle-goal')     return true;
+  if (path === '/weekly-todos/api/toggle-todo')     return true;
+  if (path === '/habit-tracker/api/toggle')         return true;
+  if (path === '/overall-todos/api/toggle')         return true;
+  if (path === '/progress/api/update-progress')     return true;
+  if (path === '/progress/api/toggle-status')       return true;
+  return false;
+}
+
 router.use((req, res, next) => {
-  if (req.method !== 'POST') return next();
-  const skip = SSE_SKIP.some(p => req.path === p || req.path.startsWith('/layout-profiles/'));
-  if (skip) return next();
+  if (req.method !== 'POST' || shouldSkipSSE(req.path)) return next();
   const origJson     = res.json.bind(res);
   const origRedirect = res.redirect.bind(res);
   res.json = function (data) {
