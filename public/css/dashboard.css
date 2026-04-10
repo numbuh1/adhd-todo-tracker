@@ -382,7 +382,7 @@ html, body {
 .habit-check-cell {
   text-align: center;
   vertical-align: middle;
-  padding: .3rem .2rem;
+/*  padding: .3rem .2rem;*/
 }
 
 .habit-cell-today { background: rgba(255,255,255,0.04); border-radius: 6px; }
