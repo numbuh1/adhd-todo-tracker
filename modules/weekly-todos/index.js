@@ -1,7 +1,8 @@
-const express = require('express');
-const path    = require('path');
-const dayjs   = require('dayjs');
-const Week    = require('./model');
+const express       = require('express');
+const path          = require('path');
+const dayjs         = require('dayjs');
+const Week          = require('./model');
+const RecurringTodo = require('../recurring-todos/model');
 
 const bp = req => req.app.locals.basePath || '';
 
@@ -17,17 +18,47 @@ const getDashboardData = async (userId) => {
   const monday  = getMondayOf(new Date());
   const weekDoc = await Week.getOrCreate(monday.format('YYYY-MM-DD'), userId);
 
+  // Fetch all active recurring rules once, then match per day
+  const allRules = await RecurringTodo.find({ userId, active: true }).lean();
+
+  const days = weekDoc.days.map(day => {
+    const date    = new Date(day.date);
+    const ymd     = dayjs(day.date).format('YYYY-MM-DD');
+    const dow     = date.getDay();
+    const dom     = date.getDate();
+    const moy     = date.getMonth() + 1;
+
+    const recurringTodos = allRules
+      .filter(r => {
+        if (r.startDate && date < new Date(r.startDate)) return false;
+        if (r.endDate   && date > new Date(r.endDate))   return false;
+        if (r.type === 'weekly')  return r.dayOfWeek  === dow;
+        if (r.type === 'monthly') return r.dayOfMonth === dom;
+        if (r.type === 'yearly')  return r.dayOfMonth === dom && r.monthOfYear === moy;
+        return false;
+      })
+      .map(r => ({
+        _id:           r._id,
+        text:          r.text,
+        completedToday: r.completions.includes(ymd),
+        ymd
+      }));
+
+    return {
+      dayIndex:       day.dayIndex,
+      date:           day.date,
+      todos:          day.todos.map(t => ({ _id: t._id, text: t.text, completed: t.completed })),
+      recurringTodos,
+      dateLabel:      dayjs(day.date).format('ddd D'),
+      isToday:        ymd === dayjs().format('YYYY-MM-DD')
+    };
+  });
+
   return {
     weekStart: monday.format('YYYY-MM-DD'),
     weekId:    weekDoc._id.toString(),
     goals:     weekDoc.goals,
-    days: weekDoc.days.map(day => ({
-      dayIndex:  day.dayIndex,
-      date:      day.date,
-      todos:     day.todos.map(t => ({ _id: t._id, text: t.text, completed: t.completed })),
-      dateLabel: dayjs(day.date).format('ddd D'),
-      isToday:   dayjs(day.date).format('YYYY-MM-DD') === dayjs().format('YYYY-MM-DD')
-    }))
+    days
   };
 };
 

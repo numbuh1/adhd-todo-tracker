@@ -15,7 +15,10 @@
       </div>
 
       <div class="day-todos">
-        <% if (day.todos && day.todos.length > 0) { %>
+        <% const hasRegular   = day.todos   && day.todos.length   > 0; %>
+        <% const hasRecurring = day.recurringTodos && day.recurringTodos.length > 0; %>
+
+        <% if (hasRegular) { %>
           <% day.todos.forEach(todo => { %>
           <label class="todo-label<%= todo.completed ? ' completed' : '' %>"
                  data-week-id="<%= weekId %>"
@@ -29,7 +32,27 @@
             <span class="todo-text"><%= todo.text %></span>
           </label>
           <% }); %>
-        <% } else { %>
+        <% } %>
+
+        <% if (hasRecurring) { %>
+          <% if (hasRegular) { %><div class="recurring-divider"></div><% } %>
+          <% day.recurringTodos.forEach(r => { %>
+          <label class="todo-label recurring-todo-label<%= r.completedToday ? ' completed' : '' %>"
+                 data-rule-id="<%= r._id %>"
+                 data-date="<%= r.ymd %>"
+                 data-type="recurring">
+            <input type="checkbox"
+                   class="todo-check"
+                   onclick="event.stopPropagation()"
+                   <%= r.completedToday ? 'checked' : '' %>>
+            <span class="todo-text">
+              <span class="recurring-badge" title="Recurring">🔁</span><%= r.text %>
+            </span>
+          </label>
+          <% }); %>
+        <% } %>
+
+        <% if (!hasRegular && !hasRecurring) { %>
           <span class="no-items-sm">—</span>
         <% } %>
       </div>
