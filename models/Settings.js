@@ -48,6 +48,9 @@ const settingsSchema = new mongoose.Schema({
     videoPlayer: {
       enabled: { type: Boolean, default: true },
       lastUrl:  { type: String,  default: '' }
+    },
+    recurringTodos: {
+      enabled: { type: Boolean, default: true }
     }
   }
 }, { timestamps: true });
@@ -74,11 +77,12 @@ settingsSchema.statics.getSettings = async function (userId) {
   // Back-fill individual grid keys added in later versions
   let dirty = false;
   const backfill = {
-    musicPlayer:  { x: 8, y: 5, w: 4, h: 4 },
-    weeklyGoals:  { x: 4, y: 0, w: 4, h: 3 },
-    progress:     { x: 0, y: 8, w: 8, h: 4 },
-    overallTodos: { x: 8, y: 8, w: 4, h: 5 },
-    videoPlayer:  { x: 0, y: 12, w: 6, h: 8 }
+    musicPlayer:    { x: 8, y: 5,  w: 4, h: 4 },
+    weeklyGoals:    { x: 4, y: 0,  w: 4, h: 3 },
+    progress:       { x: 0, y: 8,  w: 8, h: 4 },
+    overallTodos:   { x: 8, y: 8,  w: 4, h: 5 },
+    videoPlayer:    { x: 0, y: 12, w: 6, h: 8 },
+    recurringTodos: { x: 6, y: 12, w: 6, h: 5 }
   };
   for (const [key, def] of Object.entries(backfill)) {
     if (!s.gridLayout[key]) { s.gridLayout[key] = def; dirty = true; }

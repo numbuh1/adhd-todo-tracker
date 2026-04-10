@@ -82,6 +82,9 @@ document.addEventListener('change', async (e) => {
     } else if (type === 'overall') {
       url  = BP + '/admin/overall-todos/api/toggle';
       body = { docId: label.dataset.docId, itemId: label.dataset.itemId, completed };
+    } else if (type === 'recurring') {
+      url  = BP + '/admin/recurring-todos/api/toggle';
+      body = { ruleId: label.dataset.ruleId, date: label.dataset.date, completed };
     } else { return; }
 
     const res  = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

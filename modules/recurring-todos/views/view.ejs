@@ -1,0 +1,27 @@
+<div class="module-card recurring-todos-module">
+
+  <div class="module-header">
+    <span class="module-icon">🔁</span>
+    <h2 class="module-title">Recurring To-Dos</h2>
+  </div>
+
+  <% if (!items || items.length === 0) { %>
+    <p class="no-items">Nothing recurring today. <a href="<%= basePath %>/admin/recurring-todos" style="color:var(--accent)">Add rules →</a></p>
+  <% } else { %>
+  <div class="recurring-list">
+    <% items.forEach(item => { %>
+    <label class="todo-label<%= item.completedToday ? ' completed' : '' %>"
+           data-rule-id="<%= item._id %>"
+           data-date="<%= todayYmd %>"
+           data-type="recurring">
+      <input type="checkbox"
+             class="todo-check"
+             onclick="event.stopPropagation()"
+             <%= item.completedToday ? 'checked' : '' %>>
+      <span class="todo-text"><%= item.text %></span>
+    </label>
+    <% }); %>
+  </div>
+  <% } %>
+
+</div>

@@ -1,0 +1,234 @@
+<%- include(root + '/views/partials/admin-layout-top', { title, activePage }) %>
+
+<div class="admin-content">
+
+  <% if (saved) { %>
+  <div class="alert alert-success">✅ Saved!</div>
+  <% } %>
+  <% if (error) { %>
+  <div class="alert alert-error">⚠️ <%= error %></div>
+  <% } %>
+
+  <!-- ── Add Rule ──────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">➕ Add Recurring To-Do</h2>
+    <form action="<%= basePath %>/admin/recurring-todos/rules" method="POST" id="addRuleForm">
+      <div class="form-row">
+        <div class="form-group" style="flex:2">
+          <label class="form-label">Task *</label>
+          <input type="text" name="text" placeholder="e.g. Read this manga" required class="form-control">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">Repeat</label>
+          <select name="type" id="addType" class="form-control" onchange="updateTypeFields('add')">
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+
+        <!-- weekly -->
+        <div class="form-group form-group-sm" id="add-weekly">
+          <label class="form-label">Day of Week</label>
+          <select name="dayOfWeek" class="form-control">
+            <% dayNames.forEach((d, i) => { %>
+            <option value="<%= i %>"><%= d %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <!-- monthly / yearly day -->
+        <div class="form-group form-group-sm" id="add-dom" style="display:none">
+          <label class="form-label">Day of Month</label>
+          <input type="number" name="dayOfMonth" min="1" max="31" value="1" class="form-control" style="width:70px">
+        </div>
+
+        <!-- yearly month -->
+        <div class="form-group form-group-sm" id="add-moy" style="display:none">
+          <label class="form-label">Month</label>
+          <select name="monthOfYear" class="form-control">
+            <% monthNames.forEach((m, i) => { %>
+            <option value="<%= i+1 %>"><%= m %></option>
+            <% }); %>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group form-group-sm">
+          <label class="form-label">Start Date</label>
+          <input type="date" name="startDate" class="form-control"
+                 value="<%= new Date().toISOString().slice(0,10) %>">
+        </div>
+        <div class="form-group form-group-sm">
+          <label class="form-label">End Date <span style="opacity:.45">(optional)</span></label>
+          <input type="date" name="endDate" class="form-control">
+        </div>
+        <div class="form-group form-group-btn">
+          <button type="submit" class="btn btn-primary">Add Rule</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- ── Rules List ────────────────────────────────────────── -->
+  <div class="admin-card">
+    <h2 class="card-title">🔁 All Rules (<%= rules.length %>)</h2>
+
+    <% if (rules.length === 0) { %>
+      <p class="empty-msg">No recurring to-dos yet. Add one above!</p>
+    <% } else { %>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Task</th>
+          <th>Schedule</th>
+          <th>Date Range</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% rules.forEach(r => {
+          const rId = r._id.toString();
+        %>
+        <!-- View row -->
+        <tr id="rview-<%= rId %>" class="<%= r.active ? '' : 'rule-inactive' %>">
+          <td><strong><%= r.text %></strong></td>
+          <td><span class="schedule-badge"><%= r.scheduleLabel %></span></td>
+          <td style="font-size:.8rem; opacity:.7">
+            <%= new Date(r.startDate).toLocaleDateString() %>
+            <% if (r.endDate) { %> → <%= new Date(r.endDate).toLocaleDateString() %><% } else { %> → ∞<% } %>
+          </td>
+          <td>
+            <form action="<%= basePath %>/admin/recurring-todos/rules/<%= rId %>/toggle-active" method="POST" style="display:inline">
+              <button type="submit" class="btn btn-xs <%= r.active ? 'btn-secondary' : 'btn-muted' %>">
+                <%= r.active ? '👁 Active' : '🙈 Hidden' %>
+              </button>
+            </form>
+          </td>
+          <td>
+            <button class="btn btn-sm btn-secondary" onclick="toggleRuleEdit('<%= rId %>', true)">Edit</button>
+            <form action="<%= basePath %>/admin/recurring-todos/rules/<%= rId %>/delete"
+                  method="POST" style="display:inline"
+                  onsubmit="return confirm('Delete this recurring to-do?')">
+              <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+            </form>
+          </td>
+        </tr>
+
+        <!-- Edit row -->
+        <tr id="redit-<%= rId %>" style="display:none; background:#0d0d22;">
+          <td colspan="5">
+            <form action="<%= basePath %>/admin/recurring-todos/rules/<%= rId %>/edit" method="POST">
+              <div class="form-row" style="padding:.5rem 0">
+                <div class="form-group" style="flex:2">
+                  <label class="form-label">Task</label>
+                  <input type="text" name="text" value="<%= r.text %>" class="form-control form-control-sm" required>
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Repeat</label>
+                  <select name="type" class="form-control form-control-sm" id="editType-<%= rId %>"
+                          onchange="updateTypeFields('edit-<%= rId %>')">
+                    <option value="weekly"  <%= r.type==='weekly'  ? 'selected':'' %>>Weekly</option>
+                    <option value="monthly" <%= r.type==='monthly' ? 'selected':'' %>>Monthly</option>
+                    <option value="yearly"  <%= r.type==='yearly'  ? 'selected':'' %>>Yearly</option>
+                  </select>
+                </div>
+                <div class="form-group form-group-sm" id="edit-<%= rId %>-weekly"
+                     style="display:<%= r.type==='weekly' ? '' : 'none' %>">
+                  <label class="form-label">Day of Week</label>
+                  <select name="dayOfWeek" class="form-control form-control-sm">
+                    <% dayNames.forEach((d, i) => { %>
+                    <option value="<%= i %>" <%= r.dayOfWeek===i ? 'selected':'' %>><%= d %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="form-group form-group-sm" id="edit-<%= rId %>-dom"
+                     style="display:<%= r.type!=='weekly' ? '' : 'none' %>">
+                  <label class="form-label">Day of Month</label>
+                  <input type="number" name="dayOfMonth" min="1" max="31"
+                         value="<%= r.dayOfMonth || 1 %>"
+                         class="form-control form-control-sm" style="width:70px">
+                </div>
+                <div class="form-group form-group-sm" id="edit-<%= rId %>-moy"
+                     style="display:<%= r.type==='yearly' ? '' : 'none' %>">
+                  <label class="form-label">Month</label>
+                  <select name="monthOfYear" class="form-control form-control-sm">
+                    <% monthNames.forEach((m, i) => { %>
+                    <option value="<%= i+1 %>" <%= r.monthOfYear===(i+1) ? 'selected':'' %>><%= m %></option>
+                    <% }); %>
+                  </select>
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">Start</label>
+                  <input type="date" name="startDate"
+                         value="<%= new Date(r.startDate).toISOString().slice(0,10) %>"
+                         class="form-control form-control-sm">
+                </div>
+                <div class="form-group form-group-sm">
+                  <label class="form-label">End</label>
+                  <input type="date" name="endDate"
+                         value="<%= r.endDate ? new Date(r.endDate).toISOString().slice(0,10) : '' %>"
+                         class="form-control form-control-sm">
+                </div>
+                <div class="form-group form-group-btn">
+                  <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                  <button type="button" class="btn btn-sm btn-secondary"
+                          onclick="toggleRuleEdit('<%= rId %>', false)">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </td>
+        </tr>
+        <% }); %>
+      </tbody>
+    </table>
+    <% } %>
+  </div>
+
+</div>
+
+<style>
+.rule-inactive td { opacity: .45; }
+.schedule-badge {
+  display: inline-block;
+  background: rgba(124,58,237,.15);
+  color: #c4b5fd;
+  border-radius: 20px;
+  padding: 2px 10px;
+  font-size: .75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.btn-muted {
+  background: rgba(255,255,255,0.04) !important;
+  border-color: rgba(255,255,255,0.08) !important;
+  opacity: .55;
+}
+</style>
+
+<script>
+function toggleRuleEdit(id, show) {
+  document.getElementById('rview-' + id).style.display = show ? 'none' : '';
+  document.getElementById('redit-' + id).style.display = show ? ''     : 'none';
+}
+
+// Show/hide schedule sub-fields based on selected type
+function updateTypeFields(prefix) {
+  const typeEl  = document.getElementById(prefix === 'add' ? 'addType' : 'editType-' + prefix.replace('edit-',''));
+  if (!typeEl) return;
+  const type    = typeEl.value;
+  const pfx     = prefix === 'add' ? 'add' : prefix;  // e.g. 'add' or 'edit-{id}'
+
+  const weekly  = document.getElementById(pfx + '-weekly');
+  const dom     = document.getElementById(pfx + '-dom');
+  const moy     = document.getElementById(pfx + '-moy');
+
+  if (weekly) weekly.style.display = type === 'weekly'  ? '' : 'none';
+  if (dom)    dom.style.display    = type !== 'weekly'  ? '' : 'none';
+  if (moy)    moy.style.display    = type === 'yearly'  ? '' : 'none';
+}
+</script>
+
+<%- include(root + '/views/partials/admin-layout-bottom') %>

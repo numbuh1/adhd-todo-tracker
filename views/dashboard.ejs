@@ -137,8 +137,9 @@
     habitTracker: { x: 8,  y: 0,  w: 4,  h: 5 },
     musicPlayer:  { x: 8,  y: 5,  w: 4,  h: 4 },
     progress:     { x: 0,  y: 8,  w: 8,  h: 4 },
-    overallTodos: { x: 8,  y: 8,  w: 4,  h: 5 },
-    videoPlayer:  { x: 0,  y: 12, w: 6,  h: 8 }
+    overallTodos:   { x: 8, y: 8,  w: 4, h: 5 },
+    videoPlayer:    { x: 0, y: 12, w: 6, h: 8 },
+    recurringTodos: { x: 6, y: 12, w: 6, h: 5 }
   };
   function gs(key) { return Object.assign({}, DEFAULTS[key], GL[key] || {}); }
   %>
@@ -201,7 +202,14 @@
     </div>
     <% } %>
 
-    <% if (!calendarEnabled && !weeklyEnabled && !habitEnabled && !musicEnabled && !progressEnabled && !overallTodosEnabled && !videoPlayerEnabled) { %>
+    <% if (recurringTodosEnabled) { const p = gs('recurringTodos'); %>
+    <div class="grid-stack-item" gs-id="recurringTodos"
+         gs-x="<%= p.x %>" gs-y="<%= p.y %>" gs-w="<%= p.w %>" gs-h="<%= p.h %>">
+      <div class="grid-stack-item-content"><%- recurringTodosHtml %></div>
+    </div>
+    <% } %>
+
+    <% if (!calendarEnabled && !weeklyEnabled && !habitEnabled && !musicEnabled && !progressEnabled && !overallTodosEnabled && !videoPlayerEnabled && !recurringTodosEnabled) { %>
     <div class="empty-dashboard">
       <p>No modules enabled. <a href="<%= basePath %>/admin/settings">Go to Settings →</a></p>
     </div>
@@ -214,23 +222,43 @@
   <script>
   /* ── SSE live-update client ──────────────────────────────── */
   (function () {
-    let reloadTimer = null;
+    let debounceTimer = null;
+    let pendingModules = new Set();
+
+    async function refreshModules(modules) {
+      // Full reload only when settings change (module visibility toggled)
+      if (modules.includes('all')) { window.location.reload(); return; }
+      for (const mod of modules) {
+        try {
+          const r    = await fetch(window.BASE_PATH + '/module-html/' + mod);
+          const json = await r.json();
+          if (!json.ok) { window.location.reload(); return; }
+          const slot = document.querySelector(
+            `.grid-stack-item[gs-id="${mod}"] .grid-stack-item-content`
+          );
+          if (slot) slot.innerHTML = json.html;
+        } catch (e) {
+          window.location.reload(); return;
+        }
+      }
+    }
+
     function connect() {
       const es = new EventSource(window.BASE_PATH + '/live-updates');
-      es.addEventListener('update', () => {
-        // Debounce: wait 300 ms in case multiple events fire together
-        clearTimeout(reloadTimer);
-        reloadTimer = setTimeout(() => {
-          const vp = document.getElementById('vpIframe');
-          if (vp && vp.src) sessionStorage.setItem('_vp_src', vp.src);
-          window.location.reload();
+      es.addEventListener('update', (e) => {
+        try {
+          const data = JSON.parse(e.data || '{}');
+          (data.modules || ['all']).forEach(m => pendingModules.add(m));
+        } catch (_) { pendingModules.add('all'); }
+        // Debounce: flush all accumulated modules together after 300 ms
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          const mods = [...pendingModules];
+          pendingModules.clear();
+          refreshModules(mods);
         }, 300);
       });
-      es.onerror = () => {
-        es.close();
-        // Reconnect after 5 s if connection drops
-        setTimeout(connect, 5000);
-      };
+      es.onerror = () => { es.close(); setTimeout(connect, 5000); };
     }
     connect();
   })();

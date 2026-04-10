@@ -122,6 +122,11 @@
                  <%= (settings.modules.videoPlayer && settings.modules.videoPlayer.enabled) ? 'checked' : '' %>>
           Show Video Player on Dashboard
         </label>
+        <label class="checkbox-label">
+          <input type="checkbox" name="recurringTodosEnabled"
+                 <%= (settings.modules.recurringTodos && settings.modules.recurringTodos.enabled) ? 'checked' : '' %>>
+          Show Recurring To-Dos on Dashboard
+        </label>
       </div>
 
       <div class="form-group" style="margin-top:1.5rem">

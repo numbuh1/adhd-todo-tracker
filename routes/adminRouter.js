@@ -11,39 +11,56 @@ const weeklyMod       = require('../modules/weekly-todos/index');
 const habitMod        = require('../modules/habit-tracker/index');
 const musicMod        = require('../modules/music-player/index');
 const progressMod     = require('../modules/progress/index');
-const overallTodosMod = require('../modules/overall-todos/index');
-const videoPlayerMod  = require('../modules/video-player/index');
+const overallTodosMod   = require('../modules/overall-todos/index');
+const videoPlayerMod    = require('../modules/video-player/index');
+const recurringTodosMod = require('../modules/recurring-todos/index');
 
 const bp = req => req.app.locals.basePath || '';
 
-// ── SSE notify on mutating POST requests ──────────────────
-// Skip paths that are called FROM the dashboard itself
-// (toggles, seek-bar updates, grid-layout, video URL save).
-// Only admin-panel mutations (add / edit / delete / reorder) fire SSE.
-function shouldSkipSSE(path) {
-  // Dashboard UI interactions — UI already updates in place
-  if (path.startsWith('/layout-profiles/'))        return true;
-  if (path === '/settings/grid-layout')             return true;
-  if (path === '/video-player/api/save-url')        return true;
-  if (path === '/weekly-todos/api/toggle-goal')     return true;
-  if (path === '/weekly-todos/api/toggle-todo')     return true;
-  if (path === '/habit-tracker/api/toggle')         return true;
-  if (path === '/overall-todos/api/toggle')         return true;
-  if (path === '/progress/api/update-progress')     return true;
-  if (path === '/progress/api/toggle-status')       return true;
-  return false;
+// ── SSE: detect which dashboard panel(s) to refresh ───────
+// Returns null to skip SSE, a string/array for targeted refresh,
+// or 'all' for a full page reload (settings changes).
+function getSSEModules(path) {
+  // Dashboard-originated calls — skip entirely
+  if (path.startsWith('/layout-profiles/'))        return null;
+  if (path === '/settings/grid-layout')             return null;
+  if (path === '/video-player/api/save-url')        return null;
+  if (path === '/weekly-todos/api/toggle-goal')     return null;
+  if (path === '/weekly-todos/api/toggle-todo')     return null;
+  if (path === '/habit-tracker/api/toggle')         return null;
+  if (path === '/overall-todos/api/toggle')         return null;
+  if (path === '/recurring-todos/api/toggle')       return null;
+  if (path === '/progress/api/update-progress')     return null;
+  if (path === '/progress/api/toggle-status')       return null;
+
+  // Settings: enable/disable modules — full reload needed
+  if (path === '/settings')                         return 'all';
+
+  // Module-specific targeted refresh
+  if (path.startsWith('/calendar'))                 return 'calendar';
+  if (path.startsWith('/weekly-todos'))             return ['weeklyGoals', 'weeklyTodos'];
+  if (path.startsWith('/habit-tracker'))            return 'habitTracker';
+  if (path.startsWith('/music-player'))             return 'musicPlayer';
+  if (path.startsWith('/progress'))                 return 'progress';
+  if (path.startsWith('/overall-todos'))            return 'overallTodos';
+  if (path.startsWith('/recurring-todos'))          return 'recurringTodos';
+
+  return 'all'; // fallback
 }
 
 router.use((req, res, next) => {
-  if (req.method !== 'POST' || shouldSkipSSE(req.path)) return next();
+  if (req.method !== 'POST') return next();
+  const modules = getSSEModules(req.path);
+  if (modules === null) return next();
+
   const origJson     = res.json.bind(res);
   const origRedirect = res.redirect.bind(res);
   res.json = function (data) {
-    if (data && data.ok !== false) liveUpdates.notify(req.session.userId);
+    if (data && data.ok !== false) liveUpdates.notify(req.session.userId, modules);
     return origJson(data);
   };
   res.redirect = function (...args) {
-    liveUpdates.notify(req.session.userId);
+    liveUpdates.notify(req.session.userId, modules);
     return origRedirect(...args);
   };
   next();
@@ -114,6 +131,9 @@ router.post('/settings', upload.single('wallpaper'), async (req, res) => {
 
     if (!settings.modules.videoPlayer) settings.modules.videoPlayer = {};
     settings.modules.videoPlayer.enabled = b.videoPlayerEnabled === 'on';
+
+    if (!settings.modules.recurringTodos) settings.modules.recurringTodos = {};
+    settings.modules.recurringTodos.enabled = b.recurringTodosEnabled === 'on';
 
     settings.markModified('modules');
     settings.markModified('theme');
@@ -213,7 +233,8 @@ router.use('/weekly-todos',   weeklyMod.adminRouter);
 router.use('/habit-tracker',  habitMod.adminRouter);
 router.use('/music-player',   musicMod.adminRouter);
 router.use('/progress',       progressMod.adminRouter);
-router.use('/overall-todos',  overallTodosMod.adminRouter);
-router.use('/video-player',   videoPlayerMod.adminRouter);
+router.use('/overall-todos',    overallTodosMod.adminRouter);
+router.use('/video-player',     videoPlayerMod.adminRouter);
+router.use('/recurring-todos',  recurringTodosMod.adminRouter);
 
 module.exports = router;
