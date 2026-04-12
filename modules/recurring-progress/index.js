@@ -1,7 +1,21 @@
 const express            = require('express');
 const path               = require('path');
+const multer             = require('multer');
 const dayjs              = require('dayjs');
 const RecurringProgress  = require('./model');
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, path.join(__dirname, '../../public/uploads')),
+  filename:    (req, file, cb) => cb(null, `rprog-${Date.now()}${path.extname(file.originalname)}`)
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) cb(null, true);
+    else cb(new Error('Images only'));
+  }
+});
 
 const bp = req => req.app.locals.basePath || '';
 
@@ -101,6 +115,7 @@ const getDashboardData = async (userId) => {
       description:  rule.description,
       icon:         rule.icon,
       color:        rule.color,
+      photo:        rule.photo || null,
       progress,
       status,
       deadlineLabel: deadlineLabel(rule),
@@ -131,7 +146,7 @@ router.get('/', async (req, res) => {
 });
 
 // Create rule
-router.post('/rules', async (req, res) => {
+router.post('/rules', upload.single('photo'), async (req, res) => {
   try {
     const uid = req.session.userId;
     const b   = req.body;
@@ -151,6 +166,7 @@ router.post('/rules', async (req, res) => {
       endMonth:    parseInt(b.endMonth)   || 12,
       startDate:   b.startDate ? new Date(b.startDate) : null,
       endDate:     b.endDate   ? new Date(b.endDate)   : null,
+      photo:       req.file ? '/uploads/' + req.file.filename : null,
       active:      true
     });
     res.redirect(bp(req) + '/admin/recurring-progress?saved=1');
@@ -160,26 +176,29 @@ router.post('/rules', async (req, res) => {
 });
 
 // Edit rule
-router.post('/rules/:id/edit', async (req, res) => {
+router.post('/rules/:id/edit', upload.single('photo'), async (req, res) => {
   try {
     const b = req.body;
+    const update = {
+      name:        (b.name || '').trim(),
+      description: (b.description || '').trim(),
+      icon:        (b.icon  || '📊').trim(),
+      color:       b.color  || '#7c3aed',
+      type:        b.type   || 'weekly',
+      startDow:    parseInt(b.startDow)   || 1,
+      endDow:      parseInt(b.endDow)     || 0,
+      startDom:    parseInt(b.startDom)   || 1,
+      endDom:      parseInt(b.endDom)     || 28,
+      startMonth:  parseInt(b.startMonth) || 1,
+      endMonth:    parseInt(b.endMonth)   || 12,
+      startDate:   b.startDate ? new Date(b.startDate) : null,
+      endDate:     b.endDate   ? new Date(b.endDate)   : null
+    };
+    if (req.file)                    update.photo = '/uploads/' + req.file.filename;
+    if (b.removePhoto === '1')        update.photo = null;
     await RecurringProgress.findOneAndUpdate(
       { _id: req.params.id, userId: req.session.userId },
-      {
-        name:        (b.name || '').trim(),
-        description: (b.description || '').trim(),
-        icon:        (b.icon  || '📊').trim(),
-        color:       b.color  || '#7c3aed',
-        type:        b.type   || 'weekly',
-        startDow:    parseInt(b.startDow)   || 1,
-        endDow:      parseInt(b.endDow)     || 0,
-        startDom:    parseInt(b.startDom)   || 1,
-        endDom:      parseInt(b.endDom)     || 28,
-        startMonth:  parseInt(b.startMonth) || 1,
-        endMonth:    parseInt(b.endMonth)   || 12,
-        startDate:   b.startDate ? new Date(b.startDate) : null,
-        endDate:     b.endDate   ? new Date(b.endDate)   : null
-      }
+      update
     );
     res.redirect(bp(req) + '/admin/recurring-progress?saved=1');
   } catch (err) {

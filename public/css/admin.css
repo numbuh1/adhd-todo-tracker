@@ -473,3 +473,12 @@ html, body {
   background: rgba(124,58,237,0.04);
 }
 .sortable-table .sort-ghost { opacity: .4 !important; }
+
+/* Inline edit row (table-based) – light accent tint, overrides dark inline bg */
+.data-table tr.edit-row,
+.data-table tr.edit-row td {
+  background: #f5f3ff !important;
+  border-top: 1px solid rgba(124,58,237,0.15);
+}
+/* Prevent hover from bleeding into edit rows */
+.data-table tr.edit-row:hover td { background: #f0ebff !important; }

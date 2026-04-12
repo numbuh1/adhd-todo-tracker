@@ -27,6 +27,8 @@ setInterval(updateClock, 1000);
   const header = document.getElementById('dash-header');
   if (!header || typeof GridStack === 'undefined') return;
 
+  const LS_KEY = 'adhd_grid_layout';
+
   const margin = 8;
   const grid   = GridStack.init({
     column: 12, cellHeight: 40, margin, animate: false,
@@ -35,27 +37,42 @@ setInterval(updateClock, 1000);
     resizable: { handles: 'all' }
   }, '#main-grid');
 
+  // ── Restore layout from localStorage (overrides DB positions) ──
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const layout = JSON.parse(raw);
+      grid.batchUpdate(true);
+      grid.getGridItems().forEach(el => {
+        const id = el.getAttribute('gs-id');
+        if (id && layout[id]) grid.update(el, layout[id]);
+      });
+      grid.batchUpdate(false);
+    }
+  } catch (e) {
+    console.warn('Could not restore layout from localStorage:', e);
+  }
+
+  // ── Save layout to localStorage on drag/resize ──────────────
   let saveTimer = null;
   function scheduleSave() {
     clearTimeout(saveTimer);
-    saveTimer = setTimeout(async () => {
+    saveTimer = setTimeout(() => {
       const items  = grid.save(false);
       const layout = {};
       items.forEach(item => {
         if (item.id) layout[item.id] = { x: item.x, y: item.y, w: item.w, h: item.h };
       });
       try {
-        await fetch(BP + '/admin/settings/grid-layout', {
-          method: 'POST', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ layout })
-        });
+        localStorage.setItem(LS_KEY, JSON.stringify(layout));
       } catch (e) { console.error('Layout save failed:', e); }
     }, 600);
   }
   grid.on('dragstop resizestop', scheduleSave);
 
   // expose for layout profile loader
-  window._adhd_grid = grid;
+  window._adhd_grid   = grid;
+  window._adhd_ls_key = LS_KEY;
 })();
 
 // ── Checkbox toggle ─────────────────────────────────────────
@@ -195,6 +212,10 @@ document.addEventListener('change', async (e) => {
         const res  = await fetch(BP + `/admin/layout-profiles/${id}/load`, { method: 'POST' });
         const data = await res.json();
         if (!data.ok) throw new Error(data.error);
+        // Write the loaded profile layout to localStorage so it persists client-side
+        if (data.gridLayout && window._adhd_ls_key) {
+          try { localStorage.setItem(window._adhd_ls_key, JSON.stringify(data.gridLayout)); } catch(_) {}
+        }
         window.location.reload();
       } catch (e) {
         showMsg('⚠️ ' + e.message);

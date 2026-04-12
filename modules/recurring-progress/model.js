@@ -32,6 +32,7 @@ const recurringProgressSchema = new mongoose.Schema({
   startDate: { type: Date, default: null },
   endDate:   { type: Date, default: null },
 
+  photo:   { type: String, default: null },
   active:  { type: Boolean, default: true },
   periods: [periodSchema]
 }, { timestamps: true });

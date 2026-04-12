@@ -12,13 +12,17 @@
   <!-- ── Add Form ─────────────────────────────────────────── -->
   <div class="admin-card" style="margin-bottom:1.5rem">
     <h2 class="card-title">Add New Rule</h2>
-    <form method="POST" action="<%= basePath %>/admin/recurring-progress/rules" class="rp-form">
+    <form method="POST" action="<%= basePath %>/admin/recurring-progress/rules" class="rp-form" enctype="multipart/form-data">
 
-      <!-- Row 1: icon, name, description, color -->
+      <!-- Row 1: icon, name, description, color, photo -->
       <div class="form-row">
         <div class="form-group" style="flex:0 0 70px">
           <label class="form-label">Icon</label>
-          <input type="text" name="icon" class="form-control text-center" value="📊" maxlength="4">
+          <div class="emoji-field">
+            <input type="hidden" name="icon" value="📊" class="emoji-input">
+            <button type="button" class="emoji-pick-btn"
+                    onclick="_EmojiPicker.open(this, this.closest('.emoji-field').querySelector('.emoji-input'))">📊</button>
+          </div>
         </div>
         <div class="form-group" style="flex:1">
           <label class="form-label">Name <span class="req">*</span></label>
@@ -31,6 +35,10 @@
         <div class="form-group" style="flex:0 0 80px">
           <label class="form-label">Color</label>
           <input type="color" name="color" class="form-control" value="#7c3aed" style="height:38px;padding:2px 4px">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Photo (optional)</label>
+          <input type="file" name="photo" accept="image/*" class="form-control">
         </div>
       </div>
 
@@ -134,9 +142,13 @@
     <% rules.forEach(rule => { %>
     <div class="admin-card rp-rule-card<%= rule.active ? '' : ' rp-inactive' %>" data-id="<%= rule._id %>">
 
-      <!-- Top row: icon + name + badge + controls -->
+      <!-- Top row: icon/photo + name + badge + controls -->
       <div class="rp-rule-top">
-        <span class="rp-rule-icon"><%= rule.icon %></span>
+        <% if (rule.photo) { %>
+          <img src="<%= basePath %><%= rule.photo %>" alt="<%= rule.name %>" class="rp-rule-photo">
+        <% } else { %>
+          <span class="rp-rule-icon"><%= rule.icon %></span>
+        <% } %>
         <div class="rp-rule-info">
           <span class="rp-rule-name"><%= rule.name %></span>
           <% if (rule.description) { %><span class="rp-rule-desc"><%= rule.description %></span><% } %>
@@ -160,13 +172,18 @@
       <!-- Inline edit form (hidden) -->
       <form class="rp-edit-form" data-id="<%= rule._id %>"
             method="POST"
+            enctype="multipart/form-data"
             action="<%= basePath %>/admin/recurring-progress/rules/<%= rule._id %>/edit"
             style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid rgba(255,255,255,0.07)">
 
         <div class="form-row">
           <div class="form-group" style="flex:0 0 70px">
             <label class="form-label">Icon</label>
-            <input type="text" name="icon" class="form-control text-center" value="<%= rule.icon %>" maxlength="4">
+            <div class="emoji-field">
+              <input type="hidden" name="icon" value="<%= rule.icon %>" class="emoji-input">
+              <button type="button" class="emoji-pick-btn"
+                      onclick="_EmojiPicker.open(this, this.closest('.emoji-field').querySelector('.emoji-input'))"><%- rule.icon %></button>
+            </div>
           </div>
           <div class="form-group" style="flex:1">
             <label class="form-label">Name</label>
@@ -179,6 +196,15 @@
           <div class="form-group" style="flex:0 0 80px">
             <label class="form-label">Color</label>
             <input type="color" name="color" class="form-control" value="<%= rule.color %>" style="height:38px;padding:2px 4px">
+          </div>
+          <div class="form-group">
+            <label class="form-label">New Photo</label>
+            <input type="file" name="photo" accept="image/*" class="form-control">
+            <% if (rule.photo) { %>
+              <label style="display:flex;align-items:center;gap:6px;font-size:.75rem;margin-top:4px;cursor:pointer">
+                <input type="checkbox" name="removePhoto" value="1"> Remove current photo
+              </label>
+            <% } %>
           </div>
         </div>
 
@@ -283,7 +309,8 @@
 .rp-rule-card { padding:14px 16px; }
 .rp-rule-card.rp-inactive { opacity:.55; }
 .rp-rule-top { display:flex; align-items:flex-start; gap:10px; }
-.rp-rule-icon { font-size:1.6rem; flex-shrink:0; margin-top:1px; }
+.rp-rule-icon  { font-size:1.6rem; flex-shrink:0; margin-top:1px; }
+.rp-rule-photo { width:36px; height:36px; object-fit:cover; border-radius:8px; flex-shrink:0; }
 .rp-rule-info { flex:1; display:flex; flex-direction:column; gap:2px; min-width:0; }
 .rp-rule-name { font-weight:600; font-size:.95rem; }
 .rp-rule-desc { font-size:.78rem; opacity:.5; }

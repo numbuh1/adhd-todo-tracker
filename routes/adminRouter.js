@@ -200,7 +200,7 @@ router.post('/layout-profiles/:id/load', async (req, res) => {
     settings.gridLayout = profile.gridLayout;
     settings.markModified('gridLayout');
     await settings.save();
-    res.json({ ok: true });
+    res.json({ ok: true, gridLayout: profile.gridLayout });
   } catch (err) {
     res.json({ ok: false, error: err.message });
   }

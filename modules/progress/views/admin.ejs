@@ -12,7 +12,7 @@
   <!-- ── Add Task ──────────────────────────────────────────── -->
   <div class="admin-card">
     <h2 class="card-title">➕ Add New Task</h2>
-    <form action="<%= basePath %>/admin/progress/tasks" method="POST">
+    <form action="<%= basePath %>/admin/progress/tasks" method="POST" enctype="multipart/form-data">
       <div class="form-row">
         <div class="form-group form-group-sm" style="max-width:72px">
           <label class="form-label">Icon</label>
@@ -33,6 +33,10 @@
         <div class="form-group form-group-sm">
           <label class="form-label">Color</label>
           <input type="color" name="color" value="#7c3aed" class="color-input">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Photo (optional)</label>
+          <input type="file" name="photo" accept="image/*" class="form-control">
         </div>
       </div>
       <div class="form-row" style="margin-top:-.25rem">
@@ -76,7 +80,7 @@
       <thead>
         <tr>
           <th style="width:30px"></th>
-          <th>Icon</th>
+          <th>Icon / Photo</th>
           <th>Name</th>
           <th>Description</th>
           <th>Progress</th>
@@ -96,7 +100,13 @@
         <!-- View row -->
         <tr id="tview-<%= tId %>">
           <td><span class="sort-handle">☰</span></td>
-          <td style="font-size:1.3rem"><%= t.icon %></td>
+          <td>
+            <% if (t.photo) { %>
+              <img src="<%= basePath %><%= t.photo %>" alt="<%= t.name %>" style="width:32px;height:32px;object-fit:cover;border-radius:6px;">
+            <% } else { %>
+              <span style="font-size:1.3rem"><%= t.icon %></span>
+            <% } %>
+          </td>
           <td><strong><%= t.name %></strong></td>
           <td style="opacity:.7"><%= t.description || '—' %></td>
           <td>
@@ -127,11 +137,11 @@
         </tr>
 
         <!-- Edit row -->
-        <tr id="tedit-<%= tId %>" style="display:none; background:#0d0d22;">
+        <tr id="tedit-<%= tId %>" class="edit-row" style="display:none">
           <td></td>
           <td colspan="9">
             <form action="<%= basePath %>/admin/progress/tasks/<%= tId %>/edit" method="POST"
-                  style="padding:.5rem 0">
+                  enctype="multipart/form-data" style="padding:.5rem 0">
               <div class="form-row">
                 <div class="form-group form-group-sm" style="max-width:72px">
                   <label class="form-label">Icon</label>
@@ -154,6 +164,15 @@
                 <div class="form-group form-group-sm">
                   <label class="form-label">Color</label>
                   <input type="color" name="color" value="<%= t.color %>" class="color-input">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">New Photo</label>
+                  <input type="file" name="photo" accept="image/*" class="form-control form-control-sm">
+                  <% if (t.photo) { %>
+                    <label class="checkbox-label" style="margin-top:.25rem;font-size:.75rem">
+                      <input type="checkbox" name="removePhoto" value="1"> Remove current photo
+                    </label>
+                  <% } %>
                 </div>
               </div>
               <div class="form-row">
