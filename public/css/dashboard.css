@@ -86,13 +86,57 @@ html, body {
   background: rgba(255,255,255,0.12);
 }
 
-/* Touch / tablet: no hover available — keep handles hidden at all times */
+/* Touch / tablet: replace arrows with compact corner grips */
 @media (pointer: coarse) {
-  .grid-stack-item > .ui-resizable-handle,
-  .grid-stack-item:hover > .ui-resizable-handle {
+  /* Hide all directional handles except the four corners */
+  .grid-stack-item > .ui-resizable-n,
+  .grid-stack-item > .ui-resizable-s,
+  .grid-stack-item > .ui-resizable-e,
+  .grid-stack-item > .ui-resizable-w,
+  .grid-stack-item:hover > .ui-resizable-n,
+  .grid-stack-item:hover > .ui-resizable-s,
+  .grid-stack-item:hover > .ui-resizable-e,
+  .grid-stack-item:hover > .ui-resizable-w {
     opacity: 0 !important;
     pointer-events: none !important;
   }
+
+  /* Show corner grips — always visible, compact touch targets */
+  .grid-stack-item > .ui-resizable-ne,
+  .grid-stack-item > .ui-resizable-nw,
+  .grid-stack-item > .ui-resizable-se,
+  .grid-stack-item > .ui-resizable-sw,
+  .grid-stack-item:hover > .ui-resizable-ne,
+  .grid-stack-item:hover > .ui-resizable-nw,
+  .grid-stack-item:hover > .ui-resizable-se,
+  .grid-stack-item:hover > .ui-resizable-sw {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    width:  22px !important;
+    height: 22px !important;
+    background: rgba(255,255,255,0.13) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 10 !important;
+  }
+  /* Grip dot icon rendered via ::after */
+  .grid-stack-item > .ui-resizable-ne::after,
+  .grid-stack-item > .ui-resizable-nw::after,
+  .grid-stack-item > .ui-resizable-se::after,
+  .grid-stack-item > .ui-resizable-sw::after {
+    content: '⠿';        /* braille 6-dot pattern — looks like a resize grip */
+    font-size: 11px;
+    line-height: 1;
+    color: rgba(255,255,255,0.7);
+    pointer-events: none;
+  }
+  /* Corner positions — push inward by 2px so they sit inside the card edge */
+  .grid-stack-item > .ui-resizable-se { bottom: 2px !important; right:  2px !important; }
+  .grid-stack-item > .ui-resizable-sw { bottom: 2px !important; left:   2px !important; }
+  .grid-stack-item > .ui-resizable-ne { top:    2px !important; right:  2px !important; }
+  .grid-stack-item > .ui-resizable-nw { top:    2px !important; left:   2px !important; }
 }
 
 /* ── Module card ──────────────────────────────────────────── */
