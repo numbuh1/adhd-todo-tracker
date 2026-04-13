@@ -66,17 +66,33 @@ html, body {
 }
 .module-header:active { cursor: grabbing; }
 
-/* Resize handle styling */
+/* Resize handle styling — desktop (pointer: fine = mouse) */
+.grid-stack-item > .ui-resizable-handle {
+  /* Hide ALL handle arrows by default; only the side strips get a subtle bg */
+  opacity: 0;
+  transition: opacity .15s;
+}
+.grid-stack-item:hover > .ui-resizable-handle { opacity: 1; }
+
 .grid-stack-item > .ui-resizable-e,
 .grid-stack-item > .ui-resizable-w {
   width: 8px !important;
   background: rgba(255,255,255,0.04);
   border-radius: 4px;
-  transition: background .15s;
+  transition: background .15s, opacity .15s;
 }
 .grid-stack-item > .ui-resizable-e:hover,
 .grid-stack-item > .ui-resizable-w:hover {
   background: rgba(255,255,255,0.12);
+}
+
+/* Touch / tablet: no hover available — keep handles hidden at all times */
+@media (pointer: coarse) {
+  .grid-stack-item > .ui-resizable-handle,
+  .grid-stack-item:hover > .ui-resizable-handle {
+    opacity: 0 !important;
+    pointer-events: none !important;
+  }
 }
 
 /* ── Module card ──────────────────────────────────────────── */
