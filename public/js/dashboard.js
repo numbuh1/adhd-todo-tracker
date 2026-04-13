@@ -29,6 +29,29 @@ setInterval(updateClock, 1000);
 
   const LS_KEY = 'adhd_grid_layout';
 
+  // ── Patch DOM attributes from localStorage BEFORE GridStack.init() ──
+  // This lets GridStack see the correct positions during its initial
+  // compaction pass, preventing items from being gravity-packed into
+  // wrong slots (the post-init batchUpdate approach fought the engine).
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (raw) {
+      const layout = JSON.parse(raw);
+      document.querySelectorAll('#main-grid .grid-stack-item[gs-id]').forEach(el => {
+        const id = el.getAttribute('gs-id');
+        if (id && layout[id]) {
+          const p = layout[id];
+          el.setAttribute('gs-x', p.x);
+          el.setAttribute('gs-y', p.y);
+          el.setAttribute('gs-w', p.w);
+          el.setAttribute('gs-h', p.h);
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Could not restore layout from localStorage:', e);
+  }
+
   const margin = 8;
   const grid   = GridStack.init({
     column: 12, cellHeight: 40, margin, animate: false,
@@ -36,22 +59,6 @@ setInterval(updateClock, 1000);
     draggable: { handle: '.module-header' },
     resizable: { handles: 'all' }
   }, '#main-grid');
-
-  // ── Restore layout from localStorage (overrides DB positions) ──
-  try {
-    const raw = localStorage.getItem(LS_KEY);
-    if (raw) {
-      const layout = JSON.parse(raw);
-      grid.batchUpdate(true);
-      grid.getGridItems().forEach(el => {
-        const id = el.getAttribute('gs-id');
-        if (id && layout[id]) grid.update(el, layout[id]);
-      });
-      grid.batchUpdate(false);
-    }
-  } catch (e) {
-    console.warn('Could not restore layout from localStorage:', e);
-  }
 
   // ── Save layout to localStorage on drag/resize ──────────────
   let saveTimer = null;
